@@ -4,21 +4,13 @@ import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Icon
 import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -30,7 +22,7 @@ import com.papb.projectakhirandroid.navigation.screen.Screen
 import com.papb.projectakhirandroid.presentation.common.content.ListContentProduct
 import com.papb.projectakhirandroid.presentation.component.SearchViewBar
 import com.papb.projectakhirandroid.presentation.component.SliderBanner
-import com.papb.projectakhirandroid.ui.theme.*
+import com.papb.projectakhirandroid.ui.theme.DIMENS_24dp
 import com.papb.projectakhirandroid.utils.DataDummy
 import com.papb.projectakhirandroid.utils.showToastShort
 
@@ -51,6 +43,7 @@ fun HomeScreen(
         searchQuery = searchQuery,
         allProducts = allProducts,
         onSearchValueChange = {
+            // Jika mulai mengetik, navigasi ke layar Search
             if (it.isNotEmpty()) navController.navigate(Screen.Search.route)
         },
         onClickToCart = { productItem ->
@@ -75,8 +68,6 @@ fun HomeContent(
                 .verticalScroll(rememberScrollState())
                 .padding(padding)
         ) {
-            HeaderLocationHome()
-
             SearchViewBar(
                 hint = stringResource(id = R.string.search_store),
                 query = searchQuery,
@@ -85,87 +76,56 @@ fun HomeContent(
 
             SliderBanner()
 
-            val exclusiveOfferTitle = stringResource(id = R.string.exclusive_offer)
+            Spacer(modifier = Modifier.height(DIMENS_24dp))
+
+            // REKOMENDASI (menggantikan Exclusive Offer)
+            val rekomendasiTitle = "Rekomendasi"
             ListContentProduct(
-                title = exclusiveOfferTitle,
-                products = allProducts,
+                title = rekomendasiTitle,
+                // Batasi produk menjadi 5
+                products = allProducts.take(5),
                 navController = navController,
                 onClickToCart = onClickToCart,
                 onClickSeeAll = {
-                    navController.navigate(Screen.ProductList.passTitle(exclusiveOfferTitle))
+                    // Navigasi dengan judul "Rekomendasi"
+                    navController.navigate(Screen.ProductList.passTitle(rekomendasiTitle))
                 }
             )
 
             Spacer(modifier = Modifier.height(DIMENS_24dp))
 
-            val bestSellingTitle = stringResource(id = R.string.best_selling)
+            val terlarisTitle = "Terlaris"
             ListContentProduct(
-                title = bestSellingTitle,
-                products = allProducts.sortedByDescending { it.id },
+                title = terlarisTitle,
+                // Batasi produk menjadi 5
+                products = allProducts.sortedByDescending { it.id }.take(5),
                 navController = navController,
                 onClickToCart = onClickToCart,
                 onClickSeeAll = {
-                    navController.navigate(Screen.ProductList.passTitle(bestSellingTitle))
+                    // Navigasi dengan judul "Terlaris"
+                    navController.navigate(Screen.ProductList.passTitle(terlarisTitle))
                 }
             )
-        }
-    }
-}
 
-@Composable
-fun HeaderLocationHome(
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(DIMENS_24dp))
-
-        Icon(
-            modifier = Modifier
-                .size(DIMENS_24dp)
-                .align(Alignment.CenterHorizontally),
-            painter = painterResource(id = R.drawable.ic_nectar),
-            contentDescription = stringResource(id = R.string.logo_app),
-            tint = Color.Unspecified
-        )
-
-        Spacer(modifier = Modifier.height(DIMENS_8dp))
-
-        Row {
-            Icon(
-                imageVector = Icons.Default.LocationOn,
-                contentDescription = stringResource(R.string.image_location),
-                tint = GrayThirdTextColor
-            )
-            Text(
-                modifier = Modifier.align(Alignment.CenterVertically),
-                text = stringResource(R.string.sample_country),
-                fontFamily = GilroyFontFamily,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = TEXT_SIZE_12sp,
-                color = GrayThirdTextColor
-            )
+            Spacer(modifier = Modifier.height(DIMENS_24dp))
         }
     }
 }
 
 fun clickToCart(context: Context, productItem: ProductItem, viewModel: HomeViewModel) {
+    // Memberikan feedback ke pengguna
     context.showToastShort("Berhasil Masuk Keranjang: ${productItem.title}")
+    // Menambahkan produk ke keranjang
     viewModel.addCart(productItem.copy(isCart = true))
 }
 
-@Preview(showBackground = true)
-@Composable
-fun HeaderLocationHomePreview() {
-    HeaderLocationHome()
-}
+// Preview HeaderLocationHome dihapus
 
 @ExperimentalPagerApi
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
+    // Menggunakan DataDummy untuk preview
     HomeContent(
         navController = rememberNavController(),
         searchQuery = "",
