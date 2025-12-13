@@ -20,7 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.papb.projectakhirandroid.R
-import com.papb.projectakhirandroid.navigation.graph.Graph
+import com.papb.projectakhirandroid.navigation.screen.Screen
 import com.papb.projectakhirandroid.ui.theme.*
 
 @Composable
@@ -32,8 +32,11 @@ fun OnBoardingScreen(
     OnBoarding(
         modifier = modifier.fillMaxSize(),
         onClick = {
-            navController.popBackStack()
-            navController.navigate(Graph.MAIN)
+            navController.navigate(Screen.Login.route) {
+                popUpTo(Screen.OnBoarding.route) {
+                    inclusive = true
+                }
+            }
             onBoardingViewModel.saveOnBoardingState(isCompleted = true)
         }
     )

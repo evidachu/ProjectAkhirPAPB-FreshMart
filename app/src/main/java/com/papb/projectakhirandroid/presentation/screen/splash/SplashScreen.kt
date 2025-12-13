@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.papb.projectakhirandroid.R
-import com.papb.projectakhirandroid.navigation.graph.Graph
 import com.papb.projectakhirandroid.navigation.screen.Screen
 import com.papb.projectakhirandroid.ui.theme.Green
 import kotlinx.coroutines.delay
@@ -45,8 +44,11 @@ fun SplashScreen(
         delay(1200L)
         navController.popBackStack()
 
-        if (onBoardingIsCompleted) navController.navigate(Graph.MAIN)
-        else navController.navigate(Screen.OnBoarding.route)
+        if (onBoardingIsCompleted) {
+            navController.navigate(Screen.Login.route)
+        } else {
+            navController.navigate(Screen.OnBoarding.route)
+        }
     }
 
     Splash(scale = scale.value)

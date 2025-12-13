@@ -4,32 +4,27 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-
-// Anda harus memastikan file-file berikut ada dan diimpor dengan benar.
-import com.papb.projectakhirandroid.navigation.screen.Screen // Asumsi: Lokasi file Screen.kt
+import com.papb.projectakhirandroid.navigation.screen.Screen
 import com.papb.projectakhirandroid.presentation.screen.MainScreen
-import com.papb.projectakhirandroid.presentation.screen.onboarding.OnBoardingScreen
-import com.papb.projectakhirandroid.presentation.screen.splash.SplashScreen
+import com.papb.projectakhirandroid.presentation.screen.login.LoginScreen
+import com.papb.projectakhirandroid.presentation.screen.register.RegisterScreen
 
 @Composable
 fun RootNavigationGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
-        route = Graph.ROOT, // Menggunakan Graph dari Graph.kt
-        startDestination = Screen.Splash.route // Menggunakan Screen dari Screen.kt
+        route = Graph.ROOT, 
+        startDestination = Screen.Login.route
     ) {
-        // Rute: SPLASH SCREEN
-        composable(route = Screen.Splash.route) {
-            SplashScreen(navController = navController)
+        composable(route = Screen.Login.route) {
+            LoginScreen(navController = navController)
         }
 
-        // Rute: ONBOARDING SCREEN
-        composable(route = Screen.OnBoarding.route) {
-            OnBoardingScreen(navController = navController)
+        composable(route = Screen.Register.route) {
+            RegisterScreen(navController = navController)
         }
 
-        // Rute: MAIN GRAPH (NAVIGASI BERSARANG)
-        composable(route = Graph.MAIN) {
+        composable(route = Screen.Main.route) {
             MainScreen()
         }
     }

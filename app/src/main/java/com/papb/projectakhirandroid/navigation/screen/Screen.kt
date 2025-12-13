@@ -6,9 +6,15 @@ sealed class Screen(val route: String) {
 
     object OnBoarding : Screen("on_boarding_screen")
 
+    object Login : Screen("login_screen")
+
+    object Register : Screen("register_screen")
+    
+    object Main : Screen("main_graph")
+
     object Search : Screen("search_screen")
 
-    // Rute baru untuk list produk berdasarkan kategori atau "See All"
+    // Rute baru untuk list produk berdasarkan kategori atau \"See All\"
     object ProductList : Screen("product_list_screen/{title}") {
         fun passTitle(title: String): String = "product_list_screen/$title"
     }
