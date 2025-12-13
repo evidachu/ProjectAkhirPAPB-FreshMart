@@ -68,9 +68,9 @@ fun ListContentProduct(
         if (isVerticalList) {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
-                contentPadding = PaddingValues(horizontal = DIMENS_4dp, vertical = DIMENS_4dp),
-                horizontalArrangement = Arrangement.spacedBy(DIMENS_4dp),
-                verticalArrangement = Arrangement.spacedBy(DIMENS_4dp),
+                contentPadding = PaddingValues(horizontal = DIMENS_8dp, vertical = DIMENS_8dp),
+                horizontalArrangement = Arrangement.spacedBy(DIMENS_8dp),
+                verticalArrangement = Arrangement.spacedBy(DIMENS_8dp),
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(products) { product ->
