@@ -40,7 +40,7 @@ fun GroceriesAppTheme(
 
     MaterialTheme(
         colors = colors,
-        typography = TypographyStyle,
+        typography = Typography,
         shapes = Shapes,
         content = content,
     )

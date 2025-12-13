@@ -1,10 +1,13 @@
 package com.papb.projectakhirandroid.presentation.screen.detail
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
@@ -15,7 +18,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -23,12 +28,36 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.rememberAsyncImagePainter
 import com.papb.projectakhirandroid.R
 import com.papb.projectakhirandroid.domain.model.ProductItem
+import com.papb.projectakhirandroid.domain.model.Review
 import com.papb.projectakhirandroid.presentation.common.SpacerDividerContent
 import com.papb.projectakhirandroid.presentation.component.RatingBar
-import com.papb.projectakhirandroid.ui.theme.*
+import com.papb.projectakhirandroid.ui.theme.Black
+import com.papb.projectakhirandroid.ui.theme.DIMENS_12dp
+import com.papb.projectakhirandroid.ui.theme.DIMENS_16dp
+import com.papb.projectakhirandroid.ui.theme.DIMENS_1dp
+import com.papb.projectakhirandroid.ui.theme.DIMENS_24dp
+import com.papb.projectakhirandroid.ui.theme.DIMENS_353dp
+import com.papb.projectakhirandroid.ui.theme.DIMENS_40dp
+import com.papb.projectakhirandroid.ui.theme.DIMENS_4dp
+import com.papb.projectakhirandroid.ui.theme.DIMENS_6dp
+import com.papb.projectakhirandroid.ui.theme.DIMENS_8dp
+import com.papb.projectakhirandroid.ui.theme.GilroyFontFamily
+import com.papb.projectakhirandroid.ui.theme.GrayBackground
+import com.papb.projectakhirandroid.ui.theme.GrayBackgroundSecond
+import com.papb.projectakhirandroid.ui.theme.GrayBorderStroke
+import com.papb.projectakhirandroid.ui.theme.GraySecondTextColor
+import com.papb.projectakhirandroid.ui.theme.Green
+import com.papb.projectakhirandroid.ui.theme.TEXT_SIZE_10sp
+import com.papb.projectakhirandroid.ui.theme.TEXT_SIZE_12sp
+import com.papb.projectakhirandroid.ui.theme.TEXT_SIZE_14sp
+import com.papb.projectakhirandroid.ui.theme.TEXT_SIZE_16sp
+import com.papb.projectakhirandroid.ui.theme.TEXT_SIZE_18sp
+import com.papb.projectakhirandroid.ui.theme.TEXT_SIZE_24sp
 import com.papb.projectakhirandroid.utils.showToastShort
+import java.text.DecimalFormat
 
 @Composable
 fun DetailScreen(
@@ -101,6 +130,8 @@ fun DetailContentDescription(
     onQuantityChange: (Int) -> Unit
 ) {
     var quantity by remember { mutableStateOf(1) }
+    var reviews by remember { mutableStateOf(productItem.reviews) }
+    var averageRating by remember { mutableStateOf(productItem.review) }
 
     Column(
         modifier = modifier.padding(start = DIMENS_16dp, end = DIMENS_16dp)
@@ -267,7 +298,8 @@ fun DetailContentDescription(
         SpacerDividerContent()
 
         Row(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = stringResource(R.string.review),
@@ -275,12 +307,30 @@ fun DetailContentDescription(
                 fontWeight = FontWeight.SemiBold,
                 color = Black,
                 fontSize = TEXT_SIZE_16sp,
-                modifier = Modifier
-                    .weight(1f)
-                    .align(Alignment.CenterVertically)
+                modifier = Modifier.weight(1f)
             )
 
-            RatingBar(rating = productItem.review)
+            RatingBar(rating = averageRating)
+
+            Spacer(modifier = Modifier.width(DIMENS_8dp))
+
+            Text(
+                text = "${DecimalFormat("#.0").format(averageRating)}/5",
+                fontFamily = GilroyFontFamily,
+                fontWeight = FontWeight.SemiBold,
+                color = Black,
+                fontSize = TEXT_SIZE_14sp
+            )
+
+            Spacer(modifier = Modifier.width(DIMENS_4dp))
+
+            Text(
+                text = "(${reviews.size} ulasan)",
+                fontFamily = GilroyFontFamily,
+                fontWeight = FontWeight.Normal,
+                color = GraySecondTextColor,
+                fontSize = TEXT_SIZE_12sp
+            )
 
             Spacer(modifier = Modifier.width(DIMENS_8dp))
 
@@ -290,6 +340,152 @@ fun DetailContentDescription(
             )
         }
 
+        SpacerDividerContent()
+
+        CustomerReviewSection(onReviewSubmitted = { newReview ->
+            reviews = reviews + newReview
+            val totalRating = reviews.sumOf { it.rating }
+            averageRating = totalRating.toDouble() / reviews.size
+        })
+
+        Spacer(modifier = Modifier.height(DIMENS_16dp))
+
+        reviews.forEach { review ->
+            ReviewItem(review = review)
+            Spacer(modifier = Modifier.height(DIMENS_8dp))
+        }
+    }
+}
+
+@Composable
+fun CustomerReviewSection(onReviewSubmitted: (Review) -> Unit) {
+    var rating by remember { mutableStateOf(0) }
+    var reviewText by remember { mutableStateOf("") }
+    var selectedImageUri by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        selectedImageUri = uri?.toString()
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Beri Ulasan",
+            fontFamily = GilroyFontFamily,
+            fontWeight = FontWeight.SemiBold,
+            color = Black,
+            fontSize = TEXT_SIZE_16sp,
+        )
+        Spacer(modifier = Modifier.height(DIMENS_8dp))
+
+        // Interactive Rating Bar
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            (1..5).forEach { index ->
+                IconButton(onClick = { rating = index }) {
+                    Icon(
+                        painter = painterResource(id = if (index <= rating) R.drawable.ic_star else R.drawable.ic_star_outline),
+                        contentDescription = "rating",
+                        tint = if (index <= rating) Color.Yellow else GraySecondTextColor
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(DIMENS_16dp))
+
+        OutlinedTextField(
+            value = reviewText,
+            onValueChange = { reviewText = it },
+            label = { Text("Tulis ulasan Anda...") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(DIMENS_16dp))
+
+        if (selectedImageUri != null) {
+            Image(
+                painter = rememberAsyncImagePainter(selectedImageUri),
+                contentDescription = "Selected image preview",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(DIMENS_8dp)),
+                contentScale = ContentScale.Crop
+            )
+        }
+
+        Spacer(modifier = Modifier.height(DIMENS_8dp))
+
+        Row {
+            Button(onClick = { launcher.launch("image/*") }) {
+                Text("Upload Foto")
+            }
+            Spacer(modifier = Modifier.width(DIMENS_8dp))
+            Button(
+                onClick = {
+                    val newReview = Review(
+                        id = (0..1000).random(),
+                        username = "Pengguna",
+                        userProfilePic = R.drawable.profile_picture_placeholder, // Replace with actual user data
+                        rating = rating,
+                        reviewText = reviewText,
+                        reviewImage = selectedImageUri
+                    )
+                    onReviewSubmitted(newReview)
+                    context.showToastShort("Ulasan Terkirim!")
+
+                    // Reset fields
+                    rating = 0
+                    reviewText = ""
+                    selectedImageUri = null
+                },
+            ) {
+                Text("Kirim Ulasan")
+            }
+        }
+    }
+}
+
+@Composable
+fun ReviewItem(review: Review) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        Image(
+            painter = painterResource(id = review.userProfilePic),
+            contentDescription = "User profile picture",
+            modifier = Modifier
+                .size(DIMENS_40dp)
+                .clip(CircleShape)
+        )
+        Spacer(modifier = Modifier.width(DIMENS_8dp))
+        Column {
+            Text(
+                text = review.username,
+                fontFamily = GilroyFontFamily,
+                fontWeight = FontWeight.Bold,
+                color = Black,
+                fontSize = TEXT_SIZE_14sp
+            )
+            RatingBar(rating = review.rating.toDouble())
+            Text(
+                text = review.reviewText,
+                fontFamily = GilroyFontFamily,
+                fontWeight = FontWeight.Normal,
+                color = Black,
+                fontSize = TEXT_SIZE_12sp
+            )
+            review.reviewImage?.let {
+                Image(
+                    painter = rememberAsyncImagePainter(it),
+                    contentDescription = "Review image",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(DIMENS_8dp)),
+                    contentScale = ContentScale.Crop
+                )
+            }
+        }
     }
 }
 
@@ -349,7 +545,11 @@ fun DetailContentDescriptionPreview() {
             unit = "7pcs, Priceg",
             price = 4.99,
             nutritions = "100gr",
-            review = 4.0
+            review = 4.0,
+            reviews = listOf(
+                Review(1, "John Doe", R.drawable.profile_picture_placeholder, 4, "Great product!"),
+                Review(2, "Jane Smith", R.drawable.profile_picture_placeholder, 5, "Amazing quality!")
+            )
         ),
         onQuantityChange = {}
     )

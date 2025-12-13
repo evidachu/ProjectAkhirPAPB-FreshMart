@@ -33,6 +33,7 @@ val DIMENS_353dp = 353.dp
 /* Scale Independent */
 val TEXT_SIZE_10sp = 10.sp
 val TEXT_SIZE_12sp = 12.sp
+val TEXT_SIZE_14sp = 14.sp
 val TEXT_SIZE_16sp = 16.sp
 val TEXT_SIZE_18sp = 18.sp
 val TEXT_SIZE_24sp = 24.sp

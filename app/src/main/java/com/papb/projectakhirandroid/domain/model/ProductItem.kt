@@ -16,5 +16,6 @@ data class ProductItem(
     val nutritions: String,
     val review: Double,
     var isCart: Boolean = false,
-    var quantity: Int = 1 
+    var quantity: Int = 1,
+    var reviews: List<Review> = emptyList() // Add this line
 )

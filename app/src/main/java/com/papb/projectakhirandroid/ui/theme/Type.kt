@@ -18,7 +18,7 @@ val GilroyFontFamily = FontFamily(
     Font(R.font.gilroy_regular, FontWeight.W400),
 )
 
-val TypographyStyle = Typography(
+val Typography = Typography(
     h1 = TextStyle(
         fontFamily = GilroyFontFamily,
         fontWeight = FontWeight.Bold,
