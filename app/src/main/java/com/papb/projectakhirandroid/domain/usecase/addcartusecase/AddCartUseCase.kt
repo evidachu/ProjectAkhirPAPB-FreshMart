@@ -2,8 +2,9 @@ package com.papb.projectakhirandroid.domain.usecase.addcartusecase
 
 import com.papb.projectakhirandroid.data.repository.Repository
 import com.papb.projectakhirandroid.domain.model.ProductItem
+import javax.inject.Inject
 
-class AddCartUseCase(
+class AddCartUseCase @Inject constructor(
     private val repository: Repository
 ) {
 

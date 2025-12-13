@@ -11,11 +11,13 @@ import com.papb.projectakhirandroid.navigation.screen.BottomNavItemScreen
 import com.papb.projectakhirandroid.navigation.screen.Screen
 import com.papb.projectakhirandroid.presentation.screen.about.AboutScreen
 import com.papb.projectakhirandroid.presentation.screen.cart.CartScreen
+import com.papb.projectakhirandroid.presentation.screen.checkout.CheckoutScreen
 import com.papb.projectakhirandroid.presentation.screen.detail.DetailScreen
 import com.papb.projectakhirandroid.presentation.screen.explore.ExploreScreen
 import com.papb.projectakhirandroid.presentation.screen.home.HomeViewModel
 import com.papb.projectakhirandroid.presentation.screen.home.HomeScreen
 import com.papb.projectakhirandroid.presentation.screen.home.clickToCart
+import com.papb.projectakhirandroid.presentation.screen.invoice.InvoiceScreen
 import com.papb.projectakhirandroid.presentation.screen.productlist.ProductListScreen
 import com.papb.projectakhirandroid.presentation.screen.search.SearchScreen
 import com.papb.projectakhirandroid.utils.Constants.PRODUCT_ARGUMENT_KEY
@@ -39,6 +41,14 @@ fun MainNavGraph(navController: NavHostController) {
         }
         composable(route = BottomNavItemScreen.About.route) {
             AboutScreen()
+        }
+
+        // Checkout and Invoice Screens
+        composable(route = Screen.Checkout.route) {
+            CheckoutScreen(navController = navController)
+        }
+        composable(route = Screen.Invoice.route) {
+            InvoiceScreen(navController = navController)
         }
 
         // Search Graph dengan dukungan query parameter (optional)

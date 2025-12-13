@@ -5,17 +5,30 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 
 private val DarkColorPalette = darkColors(
-    primary = Purple200,
-    primaryVariant = Purple700,
-    secondary = Teal200
+    primary = Green,
+    primaryVariant = Green, // Anda bisa menggunakan varian hijau yang lebih gelap jika ada
+    secondary = Green, // Atau varian lain
+    background = Color.Black, // Contoh warna latar belakang untuk mode gelap
+    surface = Color.DarkGray, // Contoh warna permukaan untuk mode gelap
+    onPrimary = Color.White,
+    onSecondary = Color.White,
+    onBackground = Color.White,
+    onSurface = Color.White
 )
 
 private val LightColorPalette = lightColors(
-    primary = Purple500,
-    primaryVariant = Purple700,
-    secondary = Teal200
+    primary = Green,
+    primaryVariant = Green, // Anda bisa menggunakan varian hijau yang lebih gelap jika ada
+    secondary = Green, // Atau varian lain
+    background = GrayBackground,
+    surface = Color.White,
+    onPrimary = Color.White,
+    onSecondary = Color.Black,
+    onBackground = Black,
+    onSurface = Black
 )
 
 @Composable
