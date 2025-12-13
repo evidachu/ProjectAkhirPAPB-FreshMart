@@ -24,6 +24,16 @@ fun ProductListScreen(
     title: String,
     onClickToCart: (ProductItem) -> Unit
 ) {
+    // --- Simulasi Data & Filtering ---
+    val allProducts = DataDummy.generateDummyProduct()
+
+    val filteredProducts = when (title) {
+        "Rekomendasi" -> allProducts.filter { it.id % 2 != 0 }
+        "Terlaris" -> allProducts.sortedByDescending { it.id }
+        else -> allProducts
+    }
+    // --- Akhir Simulasi Data ---
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -40,7 +50,7 @@ fun ProductListScreen(
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = "Kembali",
                             tint = Color.Black
                         )
                     }
@@ -55,24 +65,14 @@ fun ProductListScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Di sini kita bisa memfilter produk berdasarkan kategori jika perlu.
-            // Untuk saat ini, saya akan menampilkan semua produk dummy atau memfilternya secara sederhana.
-            // Idealnya data ini diambil dari ViewModel berdasarkan kategori.
-
-            val allProducts = DataDummy.generateDummyProduct()
-            val filteredProducts = if (title == "See All" || title == "Semua Produk") {
-                allProducts
-            } else {
-                // Filter sederhana: Jika judul kategori ada di deskripsi atau nama produk (Logic Dummy)
-                // Atau tampilkan semua untuk simulasi jika tidak ada data kategori spesifik di ProductItem
-                allProducts // Sementara tampilkan semua, nanti bisa diimprovisasi filter by category
-            }
-
+            // Memanggil ListContentProduct dengan isVerticalList = true
             ListContentProduct(
-                title = "", // Judul sudah di TopBar
+                title = "", // Judul di TopAppBar
                 products = filteredProducts,
                 navController = navController,
-                onClickToCart = onClickToCart
+                onClickToCart = onClickToCart,
+                onClickSeeAll = {},
+                isVerticalList = true // MENGAKTIFKAN TAMPILAN GRID 2 KOLOM VERTIKAL
             )
         }
     }
