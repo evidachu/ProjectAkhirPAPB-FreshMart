@@ -4,6 +4,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -15,10 +19,10 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.papb.projectakhirandroid.domain.model.ProductItem
 import com.papb.projectakhirandroid.presentation.common.card.ProductCard
-import com.papb.projectakhirandroid.ui.theme.*
-import com.papb.projectakhirandroid.R
+import com.papb.projectakhirandroid.ui.theme.* import com.papb.projectakhirandroid.R
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ListContentProduct(
     modifier: Modifier = Modifier,
@@ -26,7 +30,8 @@ fun ListContentProduct(
     products: List<ProductItem>,
     navController: NavController,
     onClickToCart: (ProductItem) -> Unit,
-    onClickSeeAll: () -> Unit = {}
+    onClickSeeAll: () -> Unit = {},
+    isVerticalList: Boolean = false
 ) {
     Column(
         modifier = modifier.fillMaxWidth()
@@ -57,39 +62,39 @@ fun ListContentProduct(
                 )
             }
         }
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(DIMENS_2dp),
-            contentPadding = PaddingValues(DIMENS_8dp)
-        ) {
-            items(products) { product ->
-                ProductCard(
-                    productItem = product,
-                    navController = navController,
-                    onClickToCart = onClickToCart
-                )
+
+        // KONTEN PRODUK
+        if (isVerticalList) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                contentPadding = PaddingValues(horizontal = DIMENS_4dp, vertical = DIMENS_4dp),
+                horizontalArrangement = Arrangement.spacedBy(DIMENS_4dp),
+                verticalArrangement = Arrangement.spacedBy(DIMENS_4dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(products) { product ->
+                    ProductCard(
+                        productItem = product,
+                        navController = navController,
+                        onClickToCart = onClickToCart,
+                    )
+                }
+            }
+        } else {
+            // Scroll Horizontal (LazyRow)
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(DIMENS_2dp),
+                contentPadding = PaddingValues(DIMENS_2dp)
+            ) {
+                items(products) { product ->
+                    ProductCard(
+                        productItem = product,
+                        navController = navController,
+                        onClickToCart = onClickToCart
+                    )
+                }
             }
         }
     }
 }
-
-@Preview(showBackground = true)
-@Composable
-fun ListContentProductPreview() {
-    ListContentProduct(
-        title = "Exclusive Offer",
-        products = listOf(
-            ProductItem(
-                id = 1,
-                title = "Organic Bananas",
-                description = "",
-                image = R.drawable.product10,
-                unit = "7pcs, Priceg",
-                price = 4.99,
-                nutritions = "100gr",
-                review = 4.0
-            ),
-        ),
-        navController = rememberNavController(),
-        onClickToCart = {}
-    )
-}
+// ... (Preview tetap sama)
