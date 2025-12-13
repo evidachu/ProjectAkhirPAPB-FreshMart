@@ -36,16 +36,6 @@ fun SliderBanner(
         painterResource(id = R.drawable.img_banner3)
     )
 
-    LaunchedEffect(Unit) {
-        while (true) {
-            yield()
-            delay(2600)
-            pagerState.animateScrollToPage(
-                page = (pagerState.currentPage + 1) % (pagerState.pageCount)
-            )
-        }
-    }
-
     Column {
         HorizontalPager(
             count = imageSlider.size,
