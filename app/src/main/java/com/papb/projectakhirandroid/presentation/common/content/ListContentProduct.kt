@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.papb.projectakhirandroid.domain.model.ProductItem
@@ -82,8 +83,8 @@ fun ListContentProduct(
             }
         } else {
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(DIMENS_2dp),
-                contentPadding = PaddingValues(DIMENS_2dp)
+                horizontalArrangement = Arrangement.spacedBy(DIMENS_12dp),
+                contentPadding = PaddingValues(horizontal = DIMENS_16dp)
             ) {
                 items(products) { product ->
                     ProductCard(
@@ -96,4 +97,3 @@ fun ListContentProduct(
         }
     }
 }
-// ... (Preview tetap sama)

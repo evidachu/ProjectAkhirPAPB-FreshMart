@@ -36,7 +36,6 @@ fun ProductCard(
         shape = RoundedCornerShape(DIMENS_12dp),
         border = BorderStroke(width = 1.dp, color = GrayBorderStroke),
         modifier = modifier
-            .padding(DIMENS_12dp)
             .width(DIMENS_174dp)
             .clickable {
                 navController.navigate(Screen.Details.passProductId(productId = productItem.id))
