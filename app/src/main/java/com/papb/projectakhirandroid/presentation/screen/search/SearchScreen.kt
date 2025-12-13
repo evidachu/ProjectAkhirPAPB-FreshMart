@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -25,37 +26,43 @@ fun SearchScreen(
     modifier: Modifier = Modifier,
     searchViewModel: SearchViewModel = hiltViewModel()
 ) {
+    val navController = rememberNavController()
     val searchQuery by searchViewModel.searchQuery
     val productsList by searchViewModel.searchProductList.collectAsState()
 
-    Scaffold {
+    Scaffold { paddingValues ->
         Column(
-            modifier = modifier.fillMaxSize()
+            modifier = modifier
+                .fillMaxSize()
+                .padding(paddingValues)
         ) {
             SearchViewBar(
                 query = searchQuery,
                 hint = stringResource(id = R.string.search_store),
-                onValueChange = {
-                    searchViewModel.apply {
-                        updateSearchQuery(query = it)
-                        searchProduct(query = it)
-                    }
+                onValueChange = { newValue ->
+                    // textfield menampilkan teks baru (membuat bisa diketik)
+                    searchViewModel.updateSearchQuery(query = newValue)
+                    searchViewModel.searchProduct(query = newValue)
                 },
-                onClickSearch = {
-                    searchViewModel.searchProduct(query = it)
+                onClickSearch = { query ->
+                    searchViewModel.searchProduct(query = query)
                 }
             )
 
             Spacer(modifier = Modifier.height(DIMENS_16dp))
 
-            if (searchQuery.isNotEmpty()) ListContentProduct(
-                title = "",
-                products = productsList,
-                navController = rememberNavController(),
-                onClickToCart = {}
-            )
-            else EmptyContent()
+            if (searchQuery.isNotEmpty()) {
+                ListContentProduct(
+                    title = "",
+                    products = productsList,
+                    navController = navController,
+                    onClickToCart = {},
+                    isVerticalList = true
+                )
+            }
+            else {
+                EmptyContent()
+            }
         }
     }
-
 }
