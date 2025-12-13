@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,6 +25,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -34,28 +36,7 @@ import com.papb.projectakhirandroid.domain.model.ProductItem
 import com.papb.projectakhirandroid.domain.model.Review
 import com.papb.projectakhirandroid.presentation.common.SpacerDividerContent
 import com.papb.projectakhirandroid.presentation.component.RatingBar
-import com.papb.projectakhirandroid.ui.theme.Black
-import com.papb.projectakhirandroid.ui.theme.DIMENS_12dp
-import com.papb.projectakhirandroid.ui.theme.DIMENS_16dp
-import com.papb.projectakhirandroid.ui.theme.DIMENS_1dp
-import com.papb.projectakhirandroid.ui.theme.DIMENS_24dp
-import com.papb.projectakhirandroid.ui.theme.DIMENS_353dp
-import com.papb.projectakhirandroid.ui.theme.DIMENS_40dp
-import com.papb.projectakhirandroid.ui.theme.DIMENS_4dp
-import com.papb.projectakhirandroid.ui.theme.DIMENS_6dp
-import com.papb.projectakhirandroid.ui.theme.DIMENS_8dp
-import com.papb.projectakhirandroid.ui.theme.GilroyFontFamily
-import com.papb.projectakhirandroid.ui.theme.GrayBackground
-import com.papb.projectakhirandroid.ui.theme.GrayBackgroundSecond
-import com.papb.projectakhirandroid.ui.theme.GrayBorderStroke
-import com.papb.projectakhirandroid.ui.theme.GraySecondTextColor
-import com.papb.projectakhirandroid.ui.theme.Green
-import com.papb.projectakhirandroid.ui.theme.TEXT_SIZE_10sp
-import com.papb.projectakhirandroid.ui.theme.TEXT_SIZE_12sp
-import com.papb.projectakhirandroid.ui.theme.TEXT_SIZE_14sp
-import com.papb.projectakhirandroid.ui.theme.TEXT_SIZE_16sp
-import com.papb.projectakhirandroid.ui.theme.TEXT_SIZE_18sp
-import com.papb.projectakhirandroid.ui.theme.TEXT_SIZE_24sp
+import com.papb.projectakhirandroid.ui.theme.*
 import com.papb.projectakhirandroid.utils.showToastShort
 import java.text.DecimalFormat
 
@@ -132,6 +113,7 @@ fun DetailContentDescription(
     var quantity by remember { mutableStateOf(1) }
     var reviews by remember { mutableStateOf(productItem.reviews) }
     var averageRating by remember { mutableStateOf(productItem.review) }
+    var editingReview by remember { mutableStateOf<Review?>(null) }
 
     Column(
         modifier = modifier.padding(start = DIMENS_16dp, end = DIMENS_16dp)
@@ -146,7 +128,7 @@ fun DetailContentDescription(
                     text = productItem.title,
                     fontFamily = GilroyFontFamily,
                     fontWeight = FontWeight.Bold,
-                    color = Black,
+                    color = Color.Black,
                     fontSize = TEXT_SIZE_24sp
                 )
 
@@ -204,7 +186,7 @@ fun DetailContentDescription(
                         fontFamily = GilroyFontFamily,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = TEXT_SIZE_18sp,
-                        color = Black, // Changed to Black
+                        color = Color.Black,
                         modifier = Modifier.padding(horizontal = DIMENS_16dp, vertical = DIMENS_8dp)
                     )
                 }
@@ -227,7 +209,7 @@ fun DetailContentDescription(
                 text = "Rp ${(productItem.price * quantity).toInt()}",
                 fontFamily = GilroyFontFamily,
                 fontWeight = FontWeight.Bold,
-                color = Black,
+                color = Color.Black,
                 fontSize = TEXT_SIZE_24sp
             )
         }
@@ -238,7 +220,7 @@ fun DetailContentDescription(
             text = stringResource(R.string.product_detail),
             fontFamily = GilroyFontFamily,
             fontWeight = FontWeight.SemiBold,
-            color = Black,
+            color = Color.Black,
             fontSize = TEXT_SIZE_16sp,
         )
 
@@ -262,7 +244,7 @@ fun DetailContentDescription(
                 text = stringResource(R.string.nutritions),
                 fontFamily = GilroyFontFamily,
                 fontWeight = FontWeight.SemiBold,
-                color = Black,
+                color = Color.Black,
                 fontSize = TEXT_SIZE_16sp,
                 modifier = Modifier
                     .weight(1f)
@@ -305,7 +287,7 @@ fun DetailContentDescription(
                 text = stringResource(R.string.review),
                 fontFamily = GilroyFontFamily,
                 fontWeight = FontWeight.SemiBold,
-                color = Black,
+                color = Color.Black,
                 fontSize = TEXT_SIZE_16sp,
                 modifier = Modifier.weight(1f)
             )
@@ -318,7 +300,7 @@ fun DetailContentDescription(
                 text = "${DecimalFormat("#.0").format(averageRating)}/5",
                 fontFamily = GilroyFontFamily,
                 fontWeight = FontWeight.SemiBold,
-                color = Black,
+                color = Color.Black,
                 fontSize = TEXT_SIZE_14sp
             )
 
@@ -342,27 +324,48 @@ fun DetailContentDescription(
 
         SpacerDividerContent()
 
-        CustomerReviewSection(onReviewSubmitted = { newReview ->
-            reviews = reviews + newReview
-            val totalRating = reviews.sumOf { it.rating }
-            averageRating = totalRating.toDouble() / reviews.size
-        })
+        CustomerReviewSection(
+            reviews = reviews,
+            editingReview = editingReview,
+            onReviewSubmitted = { newReview ->
+                if (editingReview == null) {
+                    reviews = reviews + newReview
+                } else {
+                    reviews = reviews.map { if (it.id == newReview.id) newReview else it }
+                }
+                val totalRating = reviews.sumOf { it.rating }
+                averageRating = totalRating.toDouble() / reviews.size
+                editingReview = null // Reset editing state
+            }
+        )
 
         Spacer(modifier = Modifier.height(DIMENS_16dp))
 
         reviews.forEach { review ->
-            ReviewItem(review = review)
+            ReviewItem(
+                review = review,
+                onEdit = { editingReview = it },
+                onDelete = { reviews = reviews - it }
+            )
             Spacer(modifier = Modifier.height(DIMENS_8dp))
         }
     }
 }
 
 @Composable
-fun CustomerReviewSection(onReviewSubmitted: (Review) -> Unit) {
+fun CustomerReviewSection(reviews: List<Review>, editingReview: Review?, onReviewSubmitted: (Review) -> Unit) {
     var rating by remember { mutableStateOf(0) }
     var reviewText by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
+
+    LaunchedEffect(editingReview) {
+        if (editingReview != null) {
+            rating = editingReview.rating
+            reviewText = editingReview.reviewText
+            selectedImageUri = editingReview.reviewImage
+        }
+    }
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -372,15 +375,14 @@ fun CustomerReviewSection(onReviewSubmitted: (Review) -> Unit) {
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "Beri Ulasan",
+            text = if (editingReview == null) "Beri Ulasan" else "Edit Ulasan",
             fontFamily = GilroyFontFamily,
             fontWeight = FontWeight.SemiBold,
-            color = Black,
+            color = Color.Black,
             fontSize = TEXT_SIZE_16sp,
         )
         Spacer(modifier = Modifier.height(DIMENS_8dp))
 
-        // Interactive Rating Bar
         Row(verticalAlignment = Alignment.CenterVertically) {
             (1..5).forEach { index ->
                 IconButton(onClick = { rating = index }) {
@@ -397,8 +399,9 @@ fun CustomerReviewSection(onReviewSubmitted: (Review) -> Unit) {
         OutlinedTextField(
             value = reviewText,
             onValueChange = { reviewText = it },
-            label = { Text("Tulis ulasan Anda...") },
-            modifier = Modifier.fillMaxWidth()
+            label = { Text("Tulis ulasan Anda...", color = Color.Black) },
+            modifier = Modifier.fillMaxWidth(),
+            textStyle = TextStyle(color = Color.Black)
         )
 
         Spacer(modifier = Modifier.height(DIMENS_16dp))
@@ -419,21 +422,25 @@ fun CustomerReviewSection(onReviewSubmitted: (Review) -> Unit) {
 
         Row {
             Button(onClick = { launcher.launch("image/*") }) {
-                Text("Upload Foto")
+                Text("Upload Foto", color = Color.Black)
             }
             Spacer(modifier = Modifier.width(DIMENS_8dp))
             Button(
                 onClick = {
-                    val newReview = Review(
-                        id = (0..1000).random(),
+                    val reviewToSubmit = editingReview?.copy(
+                        rating = rating,
+                        reviewText = reviewText,
+                        reviewImage = selectedImageUri
+                    ) ?: Review(
+                        id = (reviews.maxOfOrNull { it.id } ?: 0) + 1,
                         username = "Pengguna",
-                        userProfilePic = R.drawable.profile_picture_placeholder, // Replace with actual user data
+                        userProfilePic = R.drawable.profile_picture_placeholder,
                         rating = rating,
                         reviewText = reviewText,
                         reviewImage = selectedImageUri
                     )
-                    onReviewSubmitted(newReview)
-                    context.showToastShort("Ulasan Terkirim!")
+                    onReviewSubmitted(reviewToSubmit)
+                    context.showToastShort(if (editingReview == null) "Ulasan Terkirim!" else "Ulasan Diperbarui!")
 
                     // Reset fields
                     rating = 0
@@ -441,14 +448,14 @@ fun CustomerReviewSection(onReviewSubmitted: (Review) -> Unit) {
                     selectedImageUri = null
                 },
             ) {
-                Text("Kirim Ulasan")
+                Text(if (editingReview == null) "Kirim Ulasan" else "Update Ulasan", color = Color.Black)
             }
         }
     }
 }
 
 @Composable
-fun ReviewItem(review: Review) {
+fun ReviewItem(review: Review, onEdit: (Review) -> Unit, onDelete: (Review) -> Unit) {
     Row(modifier = Modifier.fillMaxWidth()) {
         Image(
             painter = painterResource(id = review.userProfilePic),
@@ -457,21 +464,21 @@ fun ReviewItem(review: Review) {
                 .size(DIMENS_40dp)
                 .clip(CircleShape)
         )
-        Spacer(modifier = Modifier.width(DIMENS_8dp))
-        Column {
+        Spacer(modifier = Modifier.width(DIMENS_16dp)) // Increased padding
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = review.username,
                 fontFamily = GilroyFontFamily,
                 fontWeight = FontWeight.Bold,
-                color = Black,
+                color = Color.Black,
                 fontSize = TEXT_SIZE_14sp
             )
             RatingBar(rating = review.rating.toDouble())
             Text(
                 text = review.reviewText,
                 fontFamily = GilroyFontFamily,
-                fontWeight = FontWeight.Normal,
-                color = Black,
+                fontWeight = FontWeight.Medium, // Made it bolder
+                color = Color.Black,
                 fontSize = TEXT_SIZE_12sp
             )
             review.reviewImage?.let {
@@ -485,6 +492,12 @@ fun ReviewItem(review: Review) {
                     contentScale = ContentScale.Crop
                 )
             }
+        }
+        IconButton(onClick = { onEdit(review) }) {
+            Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Color.Black)
+        }
+        IconButton(onClick = { onDelete(review) }) {
+            Icon(painterResource(id = R.drawable.ic_delete), contentDescription = "Delete", tint = Color.Black)
         }
     }
 }
