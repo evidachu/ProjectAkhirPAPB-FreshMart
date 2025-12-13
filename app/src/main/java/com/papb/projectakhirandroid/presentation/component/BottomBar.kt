@@ -21,12 +21,15 @@ fun BottomBar(
     modifier: Modifier = Modifier,
     navController: NavController,
 ) {
+    // Daftar navigasi yang sudah diperbaiki, memasukkan Komunitas
     val navigationItems = listOf(
         BottomNavItemScreen.Home,
         BottomNavItemScreen.Explore,
         BottomNavItemScreen.Cart,
+        BottomNavItemScreen.Komunitas, // <-- Item Komunitas
         BottomNavItemScreen.About
     )
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val bottomBarDestination = navigationItems.any { it.route == currentRoute }
@@ -56,6 +59,7 @@ fun BottomBar(
                     selected = currentRoute == item.route,
                     onClick = {
                         navController.navigate(item.route) {
+                            // Ini adalah logika untuk menghindari duplikasi item di back stack
                             navController.graph.startDestinationRoute?.let { screenRoute ->
                                 popUpTo(screenRoute) { saveState = true }
                             }

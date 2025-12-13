@@ -18,6 +18,8 @@ import com.papb.projectakhirandroid.presentation.screen.home.HomeViewModel
 import com.papb.projectakhirandroid.presentation.screen.home.HomeScreen
 import com.papb.projectakhirandroid.presentation.screen.home.clickToCart
 import com.papb.projectakhirandroid.presentation.screen.invoice.InvoiceScreen
+// NEW: Import KomunitasScreen
+import com.papb.projectakhirandroid.presentation.screen.komunitas.KomunitasScreen
 import com.papb.projectakhirandroid.presentation.screen.productlist.ProductListScreen
 import com.papb.projectakhirandroid.presentation.screen.search.SearchScreen
 import com.papb.projectakhirandroid.utils.Constants.PRODUCT_ARGUMENT_KEY
@@ -39,6 +41,13 @@ fun MainNavGraph(navController: NavHostController) {
         composable(route = BottomNavItemScreen.Cart.route) {
             CartScreen(navController = navController)
         }
+
+        // NEW: Tambahkan Komunitas di antara Cart dan About
+        composable(route = BottomNavItemScreen.Komunitas.route) {
+            // ASUMSI: Anda membuat KomunitasScreen() tanpa parameter wajib
+            KomunitasScreen()
+        }
+
         composable(route = BottomNavItemScreen.About.route) {
             AboutScreen()
         }
