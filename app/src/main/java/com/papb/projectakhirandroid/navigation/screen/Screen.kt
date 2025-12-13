@@ -17,4 +17,8 @@ sealed class Screen(val route: String) {
         fun passProductId(productId: Int): String = "details_screen/$productId"
     }
 
+    object Checkout : Screen("checkout_screen")
+
+    object Invoice : Screen("invoice_screen")
+
 }
