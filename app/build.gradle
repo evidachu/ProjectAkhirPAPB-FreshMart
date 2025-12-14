@@ -7,12 +7,12 @@ plugins {
 
 android {
     namespace 'com.papb.projectakhirandroid'
-    compileSdk 34
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.papb.projectakhirandroid"
         minSdk 24
-        targetSdk 34
+        targetSdk 33
         versionCode 1
         versionName "1.0"
 
@@ -97,4 +97,11 @@ dependencies {
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_ui_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_ui_version"
     androidTestImplementation "androidx.navigation:navigation-testing:2.7.6"
+
+    implementation("io.github.jan-tennert.supabase:supabase-kt:2.5.1")
+    implementation("io.github.jan-tennert.supabase:gotrue-kt:2.5.1") // Diperbaiki dari auth-kt
+    implementation("io.github.jan-tennert.supabase:postgrest-kt:2.5.1")
+
+    implementation("io.ktor:ktor-client-android:2.3.7")
+
 }
