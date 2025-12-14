@@ -28,14 +28,18 @@ import com.papb.projectakhirandroid.presentation.screen.productlist.ProductListS
 import com.papb.projectakhirandroid.presentation.screen.search.SearchScreen
 import com.papb.projectakhirandroid.utils.Constants.PRODUCT_ARGUMENT_KEY
 
+// ✅ PERBAIKAN: Import Graph agar MAIN dan DETAILS dikenali
+import com.papb.projectakhirandroid.navigation.graph.Graph
+
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun MainNavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
     NavHost(
         navController = navController,
+        // ✅ Graph.MAIN sekarang dikenali
         route = Graph.MAIN,
         startDestination = BottomNavItemScreen.Home.route,
-        modifier = modifier // Menerapkan padding (termasuk padding bottom) ke NavHost
+        modifier = modifier
     ) {
         // --- Bottom Navigation Items ---
         composable(route = BottomNavItemScreen.Home.route) {
@@ -59,17 +63,26 @@ fun MainNavGraph(navController: NavHostController, modifier: Modifier = Modifier
             EditProfileScreen(navController = navController)
         }
 
-        // ADD POST SCREEN
+        // ADD/EDIT POST SCREEN
         composable(
-            route = Screen.AddPost.route,
-            arguments = listOf(navArgument("postType") {
-                type = NavType.StringType
-            })
+            route = "${Screen.AddPost.route}/{postType}?postId={postId}",
+            arguments = listOf(
+                navArgument("postType") {
+                    type = NavType.StringType
+                },
+                navArgument("postId") {
+                    type = NavType.LongType
+                    defaultValue = 0L
+                }
+            )
         ) { backStackEntry ->
             val postType = backStackEntry.arguments?.getString("postType") ?: "resep"
+            val postId = backStackEntry.arguments?.getLong("postId") ?: 0L
+
             AddPostScreen(
                 navController = navController,
-                postType = postType
+                postType = postType,
+                postId = postId
             )
         }
 
@@ -90,7 +103,6 @@ fun MainNavGraph(navController: NavHostController, modifier: Modifier = Modifier
                 nullable = true
             })
         ) {
-            // ✅ PERBAIKAN 1 (Baris 97): Hapus parameter navController
             SearchScreen()
         }
 
@@ -120,6 +132,7 @@ fun MainNavGraph(navController: NavHostController, modifier: Modifier = Modifier
 
 fun NavGraphBuilder.detailsNavGraph(navController: NavHostController) {
     navigation(
+        // ✅ Graph.DETAILS sekarang dikenali
         route = Graph.DETAILS,
         startDestination = Screen.Details.route
     ) {
@@ -129,7 +142,6 @@ fun NavGraphBuilder.detailsNavGraph(navController: NavHostController) {
                 type = NavType.IntType
             })
         ) {
-            // ✅ PERBAIKAN 2 (Baris 138): Hapus parameter navController
             DetailScreen()
         }
     }

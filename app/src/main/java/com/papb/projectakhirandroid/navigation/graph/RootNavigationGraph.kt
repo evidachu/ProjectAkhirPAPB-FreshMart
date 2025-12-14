@@ -1,33 +1,28 @@
+// File: app/src/main/java/com/papb/projectakhirandroid/navigation/graph/RootNavigationGraph.kt
+
 package com.papb.projectakhirandroid.navigation.graph
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.papb.projectakhirandroid.navigation.screen.Screen // <-- PASTIKAN IMPOR INI BENAR
-import com.papb.projectakhirandroid.presentation.screen.MainScreen
-import com.papb.projectakhirandroid.presentation.screen.onboarding.OnBoardingScreen
-import com.papb.projectakhirandroid.presentation.screen.splash.SplashScreen
+import com.papb.projectakhirandroid.navigation.graph.Graph
+import com.papb.projectakhirandroid.navigation.graph.* import com.papb.projectakhirandroid.presentation.screen.MainScreen
+
 
 @Composable
 fun RootNavigationGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
         route = Graph.ROOT,
-        startDestination = Screen.Splash.route
+        startDestination = Graph.AUTH
     ) {
-        composable(route = Screen.Splash.route) {
-            SplashScreen(navController = navController)
-        }
+        // 1. Auth Graph (Login, Register)
+        authNavGraph(navController)
 
-        composable(route = Screen.OnBoarding.route) {
-            OnBoardingScreen(navController = navController)
-        }
-
-        // Memanggil MainScreen secara langsung setelah impor diperbaiki
-        composable(route = Screen.Main.route) {
+        // 2. Main Graph (Bottom Nav)
+        composable(route = Graph.MAIN) {
             MainScreen()
         }
     }
 }
-    
