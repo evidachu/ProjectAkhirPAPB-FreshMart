@@ -58,7 +58,6 @@ dependencies {
 
     // --- Compose & ViewModel ---
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2"
-    implementation "androidx.lifecycle:lifecycle-runtime-compose:2.6.2" // DEPENDENSI YANG HILANG
 
     // Menggunakan variabel global $compose_ui_version (diasumsikan 1.5.4)
     implementation "androidx.compose.ui:ui:$compose_ui_version"

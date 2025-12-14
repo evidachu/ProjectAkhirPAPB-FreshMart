@@ -1,3 +1,4 @@
+
 package com.papb.projectakhirandroid.presentation.screen.login
 
 import androidx.compose.foundation.background
@@ -16,48 +17,20 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.papb.projectakhirandroid.navigation.screen.Screen
-import com.papb.projectakhirandroid.presentation.auth.AuthViewModel
 import com.papb.projectakhirandroid.ui.theme.Green
 
 @Composable
-fun LoginScreen(
-    navController: NavController,
-    viewModel: AuthViewModel = hiltViewModel()
-) {
+fun LoginScreen(navController: NavController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val scaffoldState = rememberScaffoldState()
-
-    // --- Side Effects ---
-    LaunchedEffect(uiState.isLoggedIn) {
-        if (uiState.isLoggedIn) {
-            // Navigasi ke main screen, bersihkan backstack
-            navController.navigate(Screen.Main.route) {
-                popUpTo(Screen.Login.route) { inclusive = true }
-                launchSingleTop = true
-            }
-        }
-    }
-
-    LaunchedEffect(uiState.error) {
-        uiState.error?.let {
-            scaffoldState.snackbarHostState.showSnackbar(it)
-            viewModel.errorShown() // Reset error state
-        }
-    }
-
-    Scaffold(scaffoldState = scaffoldState) { paddingValues ->
+    Scaffold {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Green)
-                .padding(paddingValues) // Gunakan paddingValues dari Scaffold
                 .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -94,8 +67,7 @@ fun LoginScreen(
                     label = { Text("Alamat Email") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    colors = textFieldColors(),
-                    enabled = !uiState.isLoading
+                    colors = textFieldColors()
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
@@ -105,29 +77,25 @@ fun LoginScreen(
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    colors = textFieldColors(),
-                    enabled = !uiState.isLoading
+                    colors = textFieldColors()
                 )
                 Spacer(modifier = Modifier.height(32.dp))
-
-                Box(contentAlignment = Alignment.Center) {
-                    Button(
-                        onClick = { viewModel.login(email, password) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(backgroundColor = Color.White),
-                        enabled = !uiState.isLoading
-                    ) {
-                        Text("Masuk", fontSize = 18.sp, color = Green, fontWeight = FontWeight.Bold)
-                    }
-                    if (uiState.isLoading) {
-                        CircularProgressIndicator(
-                            color = Green,
-                            modifier = Modifier.size(30.dp)
-                        )
-                    }
+                Button(
+                    onClick = {
+                        navController.navigate(Screen.Main.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        backgroundColor = Color.White
+                    )
+                ) {
+                    Text("Masuk", fontSize = 18.sp, color = Green, fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -167,7 +135,9 @@ fun RegisterText(navController: NavController) {
         text = annotatedText,
         onClick = { offset ->
             annotatedText.getStringAnnotations(tag = "REGISTER", start = offset, end = offset)
-                .firstOrNull()?.let { navController.navigate(Screen.Register.route) }
+                .firstOrNull()?.let {
+                    navController.navigate(Screen.Register.route)
+                }
         },
         style = LocalTextStyle.current.copy(color = Color.White.copy(alpha = 0.8f))
     )
