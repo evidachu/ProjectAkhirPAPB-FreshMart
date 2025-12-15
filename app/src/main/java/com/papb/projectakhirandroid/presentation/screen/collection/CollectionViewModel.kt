@@ -24,4 +24,8 @@ class CollectionViewModel @Inject constructor() : ViewModel() {
         )
         _collections.value = _collections.value + newItem
     }
+
+    fun deleteCollection(item: CollectionItem) {
+        _collections.value = _collections.value - item
+    }
 }

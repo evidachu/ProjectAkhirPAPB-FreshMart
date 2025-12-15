@@ -22,9 +22,14 @@ import com.papb.projectakhirandroid.ui.theme.Green
 
 @Composable
 fun AddCollectionScreen(
-    navController: NavController,
-    viewModel: CollectionViewModel = hiltViewModel()
+    navController: NavController
 ) {
+    // Explicitly get the ViewModel scoped to the collection graph
+    val collectionGraphEntry = remember(navController.currentBackStackEntry) {
+        navController.getBackStackEntry("collection_graph")
+    }
+    val viewModel: CollectionViewModel = hiltViewModel(collectionGraphEntry)
+
     var name by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
 

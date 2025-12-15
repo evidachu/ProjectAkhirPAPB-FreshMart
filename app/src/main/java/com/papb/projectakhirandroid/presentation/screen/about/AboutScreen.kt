@@ -22,9 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.papb.projectakhirandroid.R
-import com.papb.projectakhirandroid.navigation.graph.Graph
 import com.papb.projectakhirandroid.navigation.screen.Screen
-import com.papb.projectakhirandroid.presentation.auth.AuthViewModel
 import com.papb.projectakhirandroid.presentation.common.card.ProfileCard
 import com.papb.projectakhirandroid.presentation.common.content.ListContentAbout
 import com.papb.projectakhirandroid.ui.theme.*

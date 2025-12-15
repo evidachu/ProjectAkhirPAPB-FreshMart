@@ -10,9 +10,10 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.runtime.*
+import com.papb.projectakhirandroid.navigation.screen.Screen
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,19 +24,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import coil.compose.rememberAsyncImagePainter
 import com.papb.projectakhirandroid.R
-import com.papb.projectakhirandroid.navigation.screen.BottomNavItemScreen
-import com.papb.projectakhirandroid.navigation.screen.Screen
 import com.papb.projectakhirandroid.ui.theme.GilroyFontFamily
 import com.papb.projectakhirandroid.ui.theme.Green
 
 @Composable
 fun CollectionScreen(
-    navController: NavController,
-    viewModel: CollectionViewModel = hiltViewModel()
+    navController: NavController
 ) {
+    val collectionGraphEntry = remember(navController.currentBackStackEntry) {
+        navController.getBackStackEntry("collection_graph")
+    }
+    val viewModel: CollectionViewModel = hiltViewModel(collectionGraphEntry)
+
     val collections by viewModel.collections.collectAsState()
 
     Scaffold(
@@ -43,17 +45,9 @@ fun CollectionScreen(
             TopAppBar(
                 title = { Text("Koleksi Saya") },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        navController.navigate(BottomNavItemScreen.About.route) {
-                            // Pop up to the start destination of the graph to avoid building up a large back stack
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            // Avoid multiple copies of the same destination when re-selecting the same item
-                            launchSingleTop = true
-                            // Restore state when re-selecting a previously selected item
-                            restoreState = true
-                        }
+                    IconButton(onClick = { 
+                        // Simply pop the back stack to return to the previous screen (Profile)
+                        navController.popBackStack()
                     }) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = Color.Black)
                     }
@@ -89,7 +83,7 @@ fun CollectionScreen(
                 contentPadding = PaddingValues(8.dp)
             ) {
                 items(collections) { collection ->
-                    CollectionCard(collection = collection)
+                    CollectionCard(collection = collection, onDelete = { viewModel.deleteCollection(it) })
                 }
             }
         }
@@ -97,33 +91,61 @@ fun CollectionScreen(
 }
 
 @Composable
-fun CollectionCard(collection: CollectionItem) {
+fun CollectionCard(collection: CollectionItem, onDelete: (CollectionItem) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier
             .padding(8.dp)
             .fillMaxWidth(),
         elevation = 4.dp
     ) { 
-        Column {
-            Image(
-                painter = rememberAsyncImagePainter(
-                    model = collection.imageUri,
-                    error = painterResource(id = R.drawable.profile_picture_placeholder) // Fallback image
-                ),
-                contentDescription = collection.name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .height(120.dp)
-                    .fillMaxWidth()
-                    .background(Color.LightGray)
-            )
-            Text(
-                text = collection.name,
-                modifier = Modifier.padding(8.dp),
-                fontFamily = GilroyFontFamily,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.Black // Ensure text is black
-            )
+        Box {
+            Column {
+                Image(
+                    painter = rememberAsyncImagePainter(
+                        model = collection.imageUri,
+                        error = painterResource(id = R.drawable.profile_picture_placeholder) // Fallback image
+                    ),
+                    contentDescription = collection.name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .height(120.dp)
+                        .fillMaxWidth()
+                        .background(Color.LightGray)
+                )
+                Text(
+                    text = collection.name,
+                    modifier = Modifier.padding(8.dp),
+                    fontFamily = GilroyFontFamily,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Black
+                )
+            }
+            IconButton(
+                onClick = { expanded = true },
+                modifier = Modifier.align(Alignment.TopEnd)
+            ) {
+                Icon(Icons.Default.MoreVert, contentDescription = "More options", tint = Color.White)
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    DropdownMenuItem(onClick = { 
+                        onDelete(collection)
+                        expanded = false
+                    }) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Hapus"
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Hapus")
+                        }
+                    }
+                }
+            }
         }
     }
 }

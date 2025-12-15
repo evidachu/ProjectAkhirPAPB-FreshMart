@@ -6,6 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
+import com.papb.projectakhirandroid.navigation.screen.Screen
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -18,7 +19,6 @@ import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.pager.ExperimentalPagerApi // Import OptIn
 import com.papb.projectakhirandroid.R
 import com.papb.projectakhirandroid.domain.model.ProductItem
-import com.papb.projectakhirandroid.navigation.screen.Screen
 import com.papb.projectakhirandroid.presentation.common.content.ListContentProduct
 import com.papb.projectakhirandroid.presentation.component.SearchViewBar
 import com.papb.projectakhirandroid.presentation.component.SliderBanner

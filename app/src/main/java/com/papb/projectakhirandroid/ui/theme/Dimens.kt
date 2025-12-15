@@ -24,12 +24,15 @@ val DIMENS_64dp = 64.dp
 val DIMENS_68dp = 68.dp
 val DIMENS_80dp = 80.dp
 val DIMENS_90dp = 90.dp
+val DIMENS_120dp = 120.dp
 val DIMENS_108dp = 108.dp
 val DIMENS_114dp = 114.dp
-val DIMENS_160dp = 160.dp // <-- PERBAIKAN: Konstanta yang hilang
+val DIMENS_150dp = 150.dp
+val DIMENS_160dp = 160.dp
 val DIMENS_174dp = 174.dp
 val DIMENS_200dp = 200.dp
 val DIMENS_248dp = 248.dp
+val DIMENS_250dp = 248.dp
 val DIMENS_353dp = 353.dp
 
 /* Scale Independent (sp) */

@@ -1,0 +1,1374 @@
+Index: app/src/main/java/com/papb/projectakhirandroid/navigation/graph/MainNavGraph.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.papb.projectakhirandroid.navigation.graph\r\n\r\nimport androidx.compose.runtime.Composable\r\nimport androidx.compose.ui.platform.LocalContext\r\nimport androidx.hilt.navigation.compose.hiltViewModel\r\nimport androidx.navigation.*\r\nimport androidx.navigation.compose.NavHost\r\nimport androidx.navigation.compose.composable\r\nimport com.google.accompanist.pager.ExperimentalPagerApi\r\nimport com.papb.projectakhirandroid.navigation.screen.BottomNavItemScreen\r\nimport com.papb.projectakhirandroid.navigation.screen.Screen\r\nimport com.papb.projectakhirandroid.presentation.screen.about.AboutScreen\r\nimport com.papb.projectakhirandroid.presentation.screen.cart.CartScreen\r\nimport com.papb.projectakhirandroid.presentation.screen.checkout.CheckoutScreen\r\nimport com.papb.projectakhirandroid.presentation.screen.detail.DetailScreen\r\nimport com.papb.projectakhirandroid.presentation.screen.editprofile.EditProfileScreen\r\nimport com.papb.projectakhirandroid.presentation.screen.explore.ExploreScreen\r\nimport com.papb.projectakhirandroid.presentation.screen.home.HomeViewModel\r\nimport com.papb.projectakhirandroid.presentation.screen.home.HomeScreen\r\nimport com.papb.projectakhirandroid.presentation.screen.home.clickToCart\r\nimport com.papb.projectakhirandroid.presentation.screen.invoice.InvoiceScreen\r\n// NEW: Import KomunitasScreen\r\nimport com.papb.projectakhirandroid.presentation.screen.komunitas.KomunitasScreen\r\nimport com.papb.projectakhirandroid.presentation.screen.productlist.ProductListScreen\r\nimport com.papb.projectakhirandroid.presentation.screen.search.SearchScreen\r\nimport com.papb.projectakhirandroid.utils.Constants.PRODUCT_ARGUMENT_KEY\r\n\r\n@OptIn(ExperimentalPagerApi::class)\r\n@Composable\r\nfun MainNavGraph(navController: NavHostController) {\r\n    NavHost(\r\n        navController = navController,\r\n        route = Graph.MAIN,\r\n        startDestination = BottomNavItemScreen.Home.route\r\n    ) {\r\n        composable(route = BottomNavItemScreen.Home.route) {\r\n            HomeScreen(navController = navController)\r\n        }\r\n        composable(route = BottomNavItemScreen.Explore.route) {\r\n            ExploreScreen(navController = navController)\r\n        }\r\n        composable(route = BottomNavItemScreen.Cart.route) {\r\n            CartScreen(navController = navController)\r\n        }\r\n\r\n        // NEW: Tambahkan Komunitas di antara Cart dan About\r\n        composable(route = BottomNavItemScreen.Komunitas.route) {\r\n            // ASUMSI: Anda membuat KomunitasScreen() tanpa parameter wajib\r\n            KomunitasScreen()\r\n        }\r\n\r\n        composable(route = BottomNavItemScreen.About.route) {\r\n            AboutScreen(navController = navController)\r\n        }\r\n\r\n        composable(route = Screen.EditProfile.route) {\r\n            EditProfileScreen(navController = navController)\r\n        }\r\n\r\n        // Checkout and Invoice Screens\r\n        composable(route = Screen.Checkout.route) {\r\n            CheckoutScreen(navController = navController)\r\n        }\r\n        composable(route = Screen.Invoice.route) {\r\n            InvoiceScreen(navController = navController)\r\n        }\r\n\r\n        // Search Graph dengan dukungan query parameter (optional)\r\n        composable(\r\n            route = Screen.Search.route,\r\n            arguments = listOf(navArgument(\"query\") {\r\n                type = NavType.StringType\r\n                defaultValue = \"\"\r\n                nullable = true\r\n            })\r\n        ) {\r\n            SearchScreen()\r\n        }\r\n\r\n        // Product List Graph (Category / See All)\r\n        composable(\r\n            route = Screen.ProductList.route,\r\n            arguments = listOf(navArgument(\"title\") {\r\n                type = NavType.StringType\r\n            })\r\n        ) { entry ->\r\n            val title = entry.arguments?.getString(\"title\") ?: \"Products\"\r\n            val homeViewModel: HomeViewModel = hiltViewModel() // Reuse HomeViewModel for cart logic\r\n            val context = LocalContext.current\r\n\r\n            ProductListScreen(\r\n                navController = navController,\r\n                title = title,\r\n                onClickToCart = { productItem ->\r\n                    clickToCart(context, productItem, homeViewModel)\r\n                }\r\n            )\r\n        }\r\n\r\n        detailsNavGraph()\r\n    }\r\n}\r\n\r\nfun NavGraphBuilder.detailsNavGraph() {\r\n    navigation(\r\n        route = Graph.DETAILS,\r\n        startDestination = Screen.Details.route\r\n    ) {\r\n        composable(\r\n            route = Screen.Details.route,\r\n            arguments = listOf(navArgument(PRODUCT_ARGUMENT_KEY) {\r\n                type = NavType.IntType\r\n            })\r\n        ) {\r\n            DetailScreen()\r\n        }\r\n    }\r\n}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/papb/projectakhirandroid/navigation/graph/MainNavGraph.kt b/app/src/main/java/com/papb/projectakhirandroid/navigation/graph/MainNavGraph.kt
+--- a/app/src/main/java/com/papb/projectakhirandroid/navigation/graph/MainNavGraph.kt	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ b/app/src/main/java/com/papb/projectakhirandroid/navigation/graph/MainNavGraph.kt	(date 1765710487400)
+@@ -8,7 +8,8 @@
+ import androidx.navigation.compose.composable
+ import com.google.accompanist.pager.ExperimentalPagerApi
+ import com.papb.projectakhirandroid.navigation.screen.BottomNavItemScreen
+-import com.papb.projectakhirandroid.navigation.screen.Screen
++import com.papb.projectakhirandroid.navigation.screen.Screen // <-- Import container Screen
++// CATATAN: Semua import eksplisit Screen.AddPost sudah dihapus.
+ import com.papb.projectakhirandroid.presentation.screen.about.AboutScreen
+ import com.papb.projectakhirandroid.presentation.screen.cart.CartScreen
+ import com.papb.projectakhirandroid.presentation.screen.checkout.CheckoutScreen
+@@ -19,7 +20,7 @@
+ import com.papb.projectakhirandroid.presentation.screen.home.HomeScreen
+ import com.papb.projectakhirandroid.presentation.screen.home.clickToCart
+ import com.papb.projectakhirandroid.presentation.screen.invoice.InvoiceScreen
+-// NEW: Import KomunitasScreen
++import com.papb.projectakhirandroid.presentation.screen.komunitas.AddPostScreen
+ import com.papb.projectakhirandroid.presentation.screen.komunitas.KomunitasScreen
+ import com.papb.projectakhirandroid.presentation.screen.productlist.ProductListScreen
+ import com.papb.projectakhirandroid.presentation.screen.search.SearchScreen
+@@ -33,6 +34,7 @@
+         route = Graph.MAIN,
+         startDestination = BottomNavItemScreen.Home.route
+     ) {
++        // --- Bottom Navigation Items ---
+         composable(route = BottomNavItemScreen.Home.route) {
+             HomeScreen(navController = navController)
+         }
+@@ -43,20 +45,26 @@
+             CartScreen(navController = navController)
+         }
+ 
+-        // NEW: Tambahkan Komunitas di antara Cart dan About
++        // Rute: KOMUNITAS
+         composable(route = BottomNavItemScreen.Komunitas.route) {
+-            // ASUMSI: Anda membuat KomunitasScreen() tanpa parameter wajib
+-            KomunitasScreen()
++            KomunitasScreen(navController = navController)
+         }
+ 
+         composable(route = BottomNavItemScreen.About.route) {
+             AboutScreen(navController = navController)
+         }
+ 
++        // --- Other Screens ---
+         composable(route = Screen.EditProfile.route) {
+             EditProfileScreen(navController = navController)
+         }
+ 
++        // RUTE ADD POST SCREEN (SEKARANG STATIS dan TIDAK MENGGUNAKAN Screen.AddPost)
++        composable(route = "add_post_screen") {
++            // AddPostScreen dipanggil tanpa parameter postType
++            AddPostScreen(navController = navController)
++        }
++
+         // Checkout and Invoice Screens
+         composable(route = Screen.Checkout.route) {
+             CheckoutScreen(navController = navController)
+@@ -85,7 +93,7 @@
+             })
+         ) { entry ->
+             val title = entry.arguments?.getString("title") ?: "Products"
+-            val homeViewModel: HomeViewModel = hiltViewModel() // Reuse HomeViewModel for cart logic
++            val homeViewModel: HomeViewModel = hiltViewModel()
+             val context = LocalContext.current
+ 
+             ProductListScreen(
+@@ -115,4 +123,4 @@
+             DetailScreen()
+         }
+     }
+-}
++}
+\ No newline at end of file
+Index: app/src/main/java/com/papb/projectakhirandroid/presentation/screen/komunitas/KomunitasScreen.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.papb.projectakhirandroid.presentation.screen.komunitas\r\n\r\nimport androidx.compose.animation.Crossfade\r\nimport androidx.compose.foundation.background\r\nimport androidx.compose.foundation.clickable\r\nimport androidx.compose.foundation.layout.*\r\nimport androidx.compose.foundation.shape.RoundedCornerShape\r\nimport androidx.compose.material.*\r\nimport androidx.compose.material.icons.Icons\r\nimport androidx.compose.material.icons.filled.Add\r\nimport androidx.compose.runtime.*\r\nimport androidx.compose.ui.Alignment\r\nimport androidx.compose.ui.Modifier\r\nimport androidx.compose.ui.draw.clip\r\nimport androidx.compose.ui.graphics.Color\r\nimport androidx.compose.ui.text.font.FontWeight\r\nimport androidx.compose.ui.tooling.preview.Preview\r\nimport androidx.navigation.NavController\r\nimport androidx.navigation.compose.rememberNavController\r\nimport com.papb.projectakhirandroid.ui.theme.* enum class KomunitasTab {\r\n    RESEP_MU,\r\n    TIPS_DAPUR\r\n}\r\n\r\n// =========================================================================\r\n//                  KOMUNITAS SCREEN UTAMA\r\n// =========================================================================\r\n\r\n@Composable\r\nfun KomunitasScreen(\r\n    navController: NavController = rememberNavController()\r\n    // Hapus parameter ViewModel\r\n) {\r\n    var selectedTab by remember { mutableStateOf(KomunitasTab.RESEP_MU) }\r\n\r\n    // NAMA PENGGUNA STATIS (Placeholder)\r\n    val currentUserName = \"Nama Profil Anda\"\r\n\r\n    Scaffold(\r\n        backgroundColor = Color.White,\r\n        floatingActionButton = {\r\n            FloatingActionButton(\r\n                // NAVIGASI KE LAYAR POSTINGAN BARU\r\n                onClick = { navController.navigate(\"add_post_screen\") },\r\n                backgroundColor = Green,\r\n                contentColor = Color.White,\r\n                modifier = Modifier.padding(bottom = DIMENS_16dp, end = DIMENS_16dp)\r\n            ) {\r\n                Icon(Icons.Default.Add, contentDescription = \"Tambah Postingan\")\r\n            }\r\n        },\r\n        floatingActionButtonPosition = FabPosition.End\r\n    ) { paddingValues ->\r\n        Column(\r\n            modifier = Modifier\r\n                .fillMaxSize()\r\n                .padding(paddingValues)\r\n        ) {\r\n\r\n            HeaderKomunitas(\r\n                title = \"FreshMart Komunitas\",\r\n                description = \"Tempat inspirasi resep harian, tips dapur, dan berbagi kreasi masakan Anda.\"\r\n            )\r\n\r\n            TabRowKomunitas(\r\n                selectedTab = selectedTab,\r\n                onTabSelected = { selectedTab = it }\r\n            )\r\n\r\n            Crossfade(targetState = selectedTab, label = \"KomunitasTabContent\") { tab ->\r\n                when (tab) {\r\n                    KomunitasTab.RESEP_MU -> ResepMuContent(currentUserName = currentUserName, navController = navController)\r\n                    KomunitasTab.TIPS_DAPUR -> TipsDapurContent(currentUserName = currentUserName, navController = navController)\r\n                }\r\n            }\r\n        }\r\n    }\r\n}\r\n\r\n// ---------------------- Komponen Header Utama ----------------------\r\n@Composable\r\nfun HeaderKomunitas(title: String, description: String) {\r\n    Column(modifier = Modifier.padding(DIMENS_16dp)) {\r\n        Text(\r\n            text = title,\r\n            fontFamily = GilroyFontFamily,\r\n            fontWeight = FontWeight.Bold,\r\n            fontSize = TEXT_SIZE_24sp,\r\n            color = Black,\r\n            modifier = Modifier.padding(bottom = DIMENS_4dp)\r\n        )\r\n        Text(\r\n            text = description,\r\n            fontFamily = GilroyFontFamily,\r\n            fontWeight = FontWeight.Normal,\r\n            fontSize = TEXT_SIZE_14sp,\r\n            color = Color.Gray\r\n        )\r\n    }\r\n    Divider(color = Color.LightGray.copy(alpha = 0.5f), thickness = DIMENS_1dp)\r\n}\r\n\r\n// ---------------------- Komponen Tab Row ----------------------\r\n@Composable\r\nfun TabRowKomunitas(\r\n    selectedTab: KomunitasTab,\r\n    onTabSelected: (KomunitasTab) -> Unit\r\n) {\r\n    Row(\r\n        modifier = Modifier\r\n            .fillMaxWidth()\r\n            .padding(DIMENS_16dp)\r\n            .clip(RoundedCornerShape(DIMENS_12dp))\r\n            .background(GrayBackground),\r\n        horizontalArrangement = Arrangement.SpaceAround,\r\n        verticalAlignment = Alignment.CenterVertically\r\n    ) {\r\n        TabItem(\r\n            text = \"Resep Mu\",\r\n            isSelected = selectedTab == KomunitasTab.RESEP_MU,\r\n            onClick = { onTabSelected(KomunitasTab.RESEP_MU) },\r\n            modifier = Modifier.weight(1f)\r\n        )\r\n        TabItem(\r\n            text = \"Tips Dapur\",\r\n            isSelected = selectedTab == KomunitasTab.TIPS_DAPUR,\r\n            onClick = { onTabSelected(KomunitasTab.TIPS_DAPUR) },\r\n            modifier = Modifier.weight(1f)\r\n        )\r\n    }\r\n}\r\n\r\n// ---------------------- Komponen Item Tab ----------------------\r\n@Composable\r\nfun TabItem(\r\n    text: String,\r\n    isSelected: Boolean,\r\n    onClick: () -> Unit,\r\n    modifier: Modifier = Modifier\r\n) {\r\n    Box(\r\n        modifier = modifier\r\n            .clip(RoundedCornerShape(DIMENS_12dp))\r\n            .background(if (isSelected) Green else Color.Transparent)\r\n            .clickable(onClick = onClick)\r\n            .padding(vertical = DIMENS_8dp),\r\n        contentAlignment = Alignment.Center\r\n    ) {\r\n        Text(\r\n            text = text,\r\n            fontFamily = GilroyFontFamily,\r\n            fontWeight = FontWeight.SemiBold,\r\n            color = if (isSelected) Color.White else Black,\r\n            fontSize = TEXT_SIZE_16sp\r\n        )\r\n    }\r\n}\r\n\r\n@Preview(showBackground = true)\r\n@Composable\r\nfun KomunitasScreenPreview() {\r\n    KomunitasScreen()\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/komunitas/KomunitasScreen.kt b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/komunitas/KomunitasScreen.kt
+--- a/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/komunitas/KomunitasScreen.kt	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/komunitas/KomunitasScreen.kt	(date 1765708713418)
+@@ -1,9 +1,9 @@
+ package com.papb.projectakhirandroid.presentation.screen.komunitas
+ 
+-import androidx.compose.animation.Crossfade
+-import androidx.compose.foundation.background
+-import androidx.compose.foundation.clickable
++import androidx.compose.foundation.Image
+ import androidx.compose.foundation.layout.*
++import androidx.compose.foundation.lazy.LazyColumn
++import androidx.compose.foundation.lazy.items
+ import androidx.compose.foundation.shape.RoundedCornerShape
+ import androidx.compose.material.*
+ import androidx.compose.material.icons.Icons
+@@ -11,153 +11,151 @@
+ import androidx.compose.runtime.*
+ import androidx.compose.ui.Alignment
+ import androidx.compose.ui.Modifier
+-import androidx.compose.ui.draw.clip
+-import androidx.compose.ui.graphics.Color
++import androidx.compose.ui.layout.ContentScale
+ import androidx.compose.ui.text.font.FontWeight
+-import androidx.compose.ui.tooling.preview.Preview
++import androidx.compose.ui.unit.dp
++import androidx.lifecycle.viewmodel.compose.viewModel
+ import androidx.navigation.NavController
+-import androidx.navigation.compose.rememberNavController
+-import com.papb.projectakhirandroid.ui.theme.* enum class KomunitasTab {
+-    RESEP_MU,
+-    TIPS_DAPUR
+-}
+-
+-// =========================================================================
+-//                  KOMUNITAS SCREEN UTAMA
+-// =========================================================================
++import coil.compose.rememberAsyncImagePainter
++import com.papb.projectakhirandroid.domain.model.Post // <-- IMPORT POST YANG BENAR
++import com.papb.projectakhirandroid.ui.theme.DIMENS_16dp
++import com.papb.projectakhirandroid.ui.theme.DIMENS_200dp
++import com.papb.projectakhirandroid.ui.theme.DIMENS_4dp
++import com.papb.projectakhirandroid.ui.theme.DIMENS_8dp
++import com.papb.projectakhirandroid.ui.theme.Green
++import com.papb.projectakhirandroid.ui.theme.GilroyFontFamily
++import com.papb.projectakhirandroid.ui.theme.TEXT_SIZE_12sp
++import com.papb.projectakhirandroid.ui.theme.TEXT_SIZE_18sp
+ 
+ @Composable
+ fun KomunitasScreen(
+-    navController: NavController = rememberNavController()
+-    // Hapus parameter ViewModel
++    navController: NavController,
++    // Asumsi KomunitasViewModel ada di package ini atau diimpor dengan benar
++    viewModel: KomunitasViewModel = viewModel()
+ ) {
+-    var selectedTab by remember { mutableStateOf(KomunitasTab.RESEP_MU) }
++    // Mengamati daftar postingan dari ViewModel
++    val allPosts by viewModel.posts.collectAsState()
++
++    // State untuk mengontrol tab yang aktif ("resep" atau "tips")
++    var selectedTab by remember { mutableStateOf("resep") }
+ 
+-    // NAMA PENGGUNA STATIS (Placeholder)
+-    val currentUserName = "Nama Profil Anda"
++    // Daftar tab
++    val tabs = listOf("resep", "tips")
++
++    // Filter postingan berdasarkan tab yang aktif
++    val filteredPosts = allPosts.filter { it.type == selectedTab }
+ 
+     Scaffold(
+-        backgroundColor = Color.White,
++        topBar = {
++            TopAppBar(
++                title = {
++                    Text(
++                        "Komunitas",
++                        fontFamily = GilroyFontFamily,
++                        fontWeight = FontWeight.Bold
++                    )
++                },
++                backgroundColor = MaterialTheme.colors.surface,
++                elevation = 4.dp
++            )
++        },
++        // Floating Action Button ditempatkan di sini
+         floatingActionButton = {
+             FloatingActionButton(
+-                // NAVIGASI KE LAYAR POSTINGAN BARU
+-                onClick = { navController.navigate("add_post_screen") },
+-                backgroundColor = Green,
+-                contentColor = Color.White,
+-                modifier = Modifier.padding(bottom = DIMENS_16dp, end = DIMENS_16dp)
++                onClick = {
++                    // Navigasi ke AddPostScreen sambil membawa parameter 'type'
++                    navController.navigate(Screen.AddPost.createRoute(selectedTab))
++                },
++                backgroundColor = Green
+             ) {
+-                Icon(Icons.Default.Add, contentDescription = "Tambah Postingan")
++                Icon(Icons.Filled.Add, contentDescription = "Tambah Postingan")
+             }
+-        },
+-        floatingActionButtonPosition = FabPosition.End
++        }
+     ) { paddingValues ->
+-        Column(
+-            modifier = Modifier
+-                .fillMaxSize()
+-                .padding(paddingValues)
+-        ) {
+-
+-            HeaderKomunitas(
+-                title = "FreshMart Komunitas",
+-                description = "Tempat inspirasi resep harian, tips dapur, dan berbagi kreasi masakan Anda."
+-            )
+-
+-            TabRowKomunitas(
+-                selectedTab = selectedTab,
+-                onTabSelected = { selectedTab = it }
+-            )
++        Column(modifier = Modifier.padding(paddingValues)) {
++            // Tab Row
++            TabRow(selectedTabIndex = tabs.indexOf(selectedTab), backgroundColor = MaterialTheme.colors.surface) {
++                tabs.forEachIndexed { index, title ->
++                    Tab(
++                        selected = selectedTab == title,
++                        onClick = { selectedTab = title },
++                        text = {
++                            Text(
++                                title.uppercase(),
++                                fontWeight = if (selectedTab == title) FontWeight.Bold else FontWeight.Normal,
++                                color = if (selectedTab == title) Green else MaterialTheme.colors.onSurface
++                            )
++                        }
++                    )
++                }
++            }
+ 
+-            Crossfade(targetState = selectedTab, label = "KomunitasTabContent") { tab ->
+-                when (tab) {
+-                    KomunitasTab.RESEP_MU -> ResepMuContent(currentUserName = currentUserName, navController = navController)
+-                    KomunitasTab.TIPS_DAPUR -> TipsDapurContent(currentUserName = currentUserName, navController = navController)
++            // Daftar Postingan
++            if (filteredPosts.isEmpty()) {
++                Box(
++                    modifier = Modifier.fillMaxSize(),
++                    contentAlignment = Alignment.Center
++                ) {
++                    Text("Belum ada postingan ${selectedTab} di sini.", color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f))
++                }
++            } else {
++                LazyColumn(contentPadding = PaddingValues(DIMENS_16dp)) {
++                    items(filteredPosts, key = { it.id }) { post ->
++                        PostItem(post = post)
++                        Spacer(modifier = Modifier.height(DIMENS_16dp))
++                    }
+                 }
+             }
+         }
+     }
+ }
+ 
+-// ---------------------- Komponen Header Utama ----------------------
+ @Composable
+-fun HeaderKomunitas(title: String, description: String) {
+-    Column(modifier = Modifier.padding(DIMENS_16dp)) {
+-        Text(
+-            text = title,
+-            fontFamily = GilroyFontFamily,
+-            fontWeight = FontWeight.Bold,
+-            fontSize = TEXT_SIZE_24sp,
+-            color = Black,
+-            modifier = Modifier.padding(bottom = DIMENS_4dp)
+-        )
+-        Text(
+-            text = description,
+-            fontFamily = GilroyFontFamily,
+-            fontWeight = FontWeight.Normal,
+-            fontSize = TEXT_SIZE_14sp,
+-            color = Color.Gray
+-        )
+-    }
+-    Divider(color = Color.LightGray.copy(alpha = 0.5f), thickness = DIMENS_1dp)
+-}
++fun PostItem(post: Post) {
++    Card(
++        modifier = Modifier.fillMaxWidth(),
++        shape = RoundedCornerShape(DIMENS_12dp),
++        elevation = DIMENS_4dp
++    ) {
++        Column(modifier = Modifier.padding(DIMENS_16dp)) {
++            // Tipe Post
++            Text(
++                post.type.uppercase(),
++                fontSize = TEXT_SIZE_12sp,
++                color = Green,
++                fontWeight = FontWeight.SemiBold
++            )
++            Spacer(modifier = Modifier.height(DIMENS_4dp))
++
++            // Judul Post
++            Text(
++                post.title,
++                fontSize = TEXT_SIZE_18sp,
++                fontWeight = FontWeight.Bold,
++                fontFamily = GilroyFontFamily
++            )
++            Spacer(modifier = Modifier.height(DIMENS_8dp))
+ 
+-// ---------------------- Komponen Tab Row ----------------------
+-@Composable
+-fun TabRowKomunitas(
+-    selectedTab: KomunitasTab,
+-    onTabSelected: (KomunitasTab) -> Unit
+-) {
+-    Row(
+-        modifier = Modifier
+-            .fillMaxWidth()
+-            .padding(DIMENS_16dp)
+-            .clip(RoundedCornerShape(DIMENS_12dp))
+-            .background(GrayBackground),
+-        horizontalArrangement = Arrangement.SpaceAround,
+-        verticalAlignment = Alignment.CenterVertically
+-    ) {
+-        TabItem(
+-            text = "Resep Mu",
+-            isSelected = selectedTab == KomunitasTab.RESEP_MU,
+-            onClick = { onTabSelected(KomunitasTab.RESEP_MU) },
+-            modifier = Modifier.weight(1f)
+-        )
+-        TabItem(
+-            text = "Tips Dapur",
+-            isSelected = selectedTab == KomunitasTab.TIPS_DAPUR,
+-            onClick = { onTabSelected(KomunitasTab.TIPS_DAPUR) },
+-            modifier = Modifier.weight(1f)
+-        )
+-    }
+-}
++            // Gambar Post
++            if (post.imageUrl != null) {
++                val painter = rememberAsyncImagePainter(model = post.imageUrl)
++                Image(
++                    painter = painter,
++                    contentDescription = "Gambar Postingan",
++                    contentScale = ContentScale.Crop,
++                    modifier = Modifier
++                        .height(DIMENS_200dp)
++                        .fillMaxWidth()
++                        .clip(RoundedCornerShape(DIMENS_8dp))
++                )
++                Spacer(modifier = Modifier.height(DIMENS_8dp))
++            }
+ 
+-// ---------------------- Komponen Item Tab ----------------------
+-@Composable
+-fun TabItem(
+-    text: String,
+-    isSelected: Boolean,
+-    onClick: () -> Unit,
+-    modifier: Modifier = Modifier
+-) {
+-    Box(
+-        modifier = modifier
+-            .clip(RoundedCornerShape(DIMENS_12dp))
+-            .background(if (isSelected) Green else Color.Transparent)
+-            .clickable(onClick = onClick)
+-            .padding(vertical = DIMENS_8dp),
+-        contentAlignment = Alignment.Center
+-    ) {
+-        Text(
+-            text = text,
+-            fontFamily = GilroyFontFamily,
+-            fontWeight = FontWeight.SemiBold,
+-            color = if (isSelected) Color.White else Black,
+-            fontSize = TEXT_SIZE_16sp
+-        )
+-    }
+-}
+-
+-@Preview(showBackground = true)
+-@Composable
+-fun KomunitasScreenPreview() {
+-    KomunitasScreen()
++            // Deskripsi (diambil sebagian)
++            Text(
++                post.description.take(150) + if (post.description.length > 150) "..." else "",
++                style = MaterialTheme.typography.body2
++            )
++        }
++    }
+ }
+\ No newline at end of file
+Index: app/src/main/java/com/papb/projectakhirandroid/presentation/screen/MainScreen.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.papb.projectakhirandroid.presentation.screen\r\n\r\nimport androidx.compose.foundation.layout.Column\r\nimport androidx.compose.foundation.layout.padding\r\nimport androidx.compose.foundation.shape.RoundedCornerShape\r\nimport androidx.compose.material.Scaffold\r\nimport androidx.compose.material.Surface\r\nimport androidx.compose.runtime.Composable\r\nimport androidx.compose.ui.Modifier\r\nimport androidx.navigation.NavHostController\r\nimport androidx.navigation.compose.rememberNavController\r\nimport com.papb.projectakhirandroid.navigation.graph.MainNavGraph\r\nimport com.papb.projectakhirandroid.presentation.component.BottomBar\r\nimport com.papb.projectakhirandroid.ui.theme.DIMENS_16dp\r\nimport com.papb.projectakhirandroid.ui.theme.DIMENS_32dp\r\n\r\n@Composable\r\nfun MainScreen(\r\n    navController: NavHostController = rememberNavController()\r\n) {\r\n    Scaffold(\r\n        bottomBar = {\r\n            Surface(\r\n                elevation = DIMENS_32dp,\r\n                shape = RoundedCornerShape(topStart = DIMENS_16dp, topEnd = DIMENS_16dp)\r\n            ) {\r\n                BottomBar(navController = navController)\r\n            }\r\n        },\r\n    ) {\r\n        Column(\r\n            modifier = Modifier.padding(it)\r\n        ) {\r\n            MainNavGraph(navController = navController)\r\n        }\r\n    }\r\n\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/MainScreen.kt b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/MainScreen.kt
+--- a/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/MainScreen.kt	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/MainScreen.kt	(date 1765711216365)
+@@ -1,38 +1,21 @@
+ package com.papb.projectakhirandroid.presentation.screen
+ 
+-import androidx.compose.foundation.layout.Column
+-import androidx.compose.foundation.layout.padding
+-import androidx.compose.foundation.shape.RoundedCornerShape
+-import androidx.compose.material.Scaffold
+-import androidx.compose.material.Surface
+-import androidx.compose.runtime.Composable
+-import androidx.compose.ui.Modifier
+-import androidx.navigation.NavHostController
+-import androidx.navigation.compose.rememberNavController
+-import com.papb.projectakhirandroid.navigation.graph.MainNavGraph
+-import com.papb.projectakhirandroid.presentation.component.BottomBar
+-import com.papb.projectakhirandroid.ui.theme.DIMENS_16dp
+-import com.papb.projectakhirandroid.ui.theme.DIMENS_32dp
++sealed class Screen(val route: String) {
++    // Rute Umum
++    data object Details : Screen("details_screen/{productId}")
++    data object Search : Screen("search_screen?query={query}")
++    data object ProductList : Screen("product_list_screen/{title}")
++    data object Checkout : Screen("checkout_screen")
++    data object Invoice : Screen("invoice_screen")
++    data object EditProfile : Screen("edit_profile_screen")
+ 
+-@Composable
+-fun MainScreen(
+-    navController: NavHostController = rememberNavController()
+-) {
+-    Scaffold(
+-        bottomBar = {
+-            Surface(
+-                elevation = DIMENS_32dp,
+-                shape = RoundedCornerShape(topStart = DIMENS_16dp, topEnd = DIMENS_16dp)
+-            ) {
+-                BottomBar(navController = navController)
+-            }
+-        },
+-    ) {
+-        Column(
+-            modifier = Modifier.padding(it)
+-        ) {
+-            MainNavGraph(navController = navController)
+-        }
++    // Rute Komunitas dengan Argument Tipe
++    data object AddPost : Screen("add_post_screen/{type}") {
++        fun createRoute(type: String) = "add_post_screen/$type"
++    }
++
++    // Fungsi untuk membuat rute Detail dengan parameter
++    fun createRouteWithProductId(productId: Int): String {
++        return "details_screen/$productId"
+     }
+-
+ }
+\ No newline at end of file
+Index: app/src/main/java/com/papb/projectakhirandroid/navigation/graph/Graph.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.papb.projectakhirandroid.navigation.graph\r\n\r\nobject Graph {\r\n    const val ROOT = \"root_graph\"\r\n    const val MAIN = \"main_graph\"\r\n    const val DETAILS = \"details_graph\"\r\n    // PERBAIKI: Mengganti 'search_grap' menjadi 'search_graph'\r\n    const val SEARCH = \"search_graph\"\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/papb/projectakhirandroid/navigation/graph/Graph.kt b/app/src/main/java/com/papb/projectakhirandroid/navigation/graph/Graph.kt
+--- a/app/src/main/java/com/papb/projectakhirandroid/navigation/graph/Graph.kt	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ b/app/src/main/java/com/papb/projectakhirandroid/navigation/graph/Graph.kt	(date 1765711537518)
+@@ -4,6 +4,6 @@
+     const val ROOT = "root_graph"
+     const val MAIN = "main_graph"
+     const val DETAILS = "details_graph"
+-    // PERBAIKI: Mengganti 'search_grap' menjadi 'search_graph'
++    // PERBAIKAN: Mengganti 'search_grap' (jika sebelumnya ada) menjadi 'search_graph'
+     const val SEARCH = "search_graph"
+ }
+\ No newline at end of file
+Index: app/src/main/java/com/papb/projectakhirandroid/presentation/screen/komunitas/AddPostScreen.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.papb.projectakhirandroid.presentation.screen.komunitas\r\n\r\nimport androidx.compose.foundation.Image\r\nimport androidx.compose.foundation.background\r\nimport androidx.compose.foundation.border\r\nimport androidx.compose.foundation.clickable\r\nimport androidx.compose.foundation.layout.*\r\nimport androidx.compose.foundation.lazy.LazyColumn\r\nimport androidx.compose.foundation.shape.CircleShape\r\nimport androidx.compose.foundation.shape.RoundedCornerShape\r\nimport androidx.compose.material.*\r\nimport androidx.compose.material.icons.Icons\r\nimport androidx.compose.material.icons.filled.ArrowBack\r\nimport androidx.compose.material.icons.filled.Close\r\nimport androidx.compose.material.icons.filled.CloudUpload\r\nimport androidx.compose.runtime.*\r\nimport androidx.compose.ui.Alignment\r\nimport androidx.compose.ui.Modifier\r\nimport androidx.compose.ui.draw.clip\r\nimport androidx.compose.ui.graphics.Color\r\nimport androidx.compose.ui.res.painterResource\r\nimport androidx.compose.ui.text.font.FontWeight\r\nimport androidx.compose.ui.tooling.preview.Preview\r\nimport androidx.navigation.NavController\r\nimport androidx.navigation.compose.rememberNavController\r\nimport com.papb.projectakhirandroid.R\r\nimport com.papb.projectakhirandroid.ui.theme.* @Composable\r\nfun AddPostScreen(navController: NavController = rememberNavController()) {\r\n    var title by remember { mutableStateOf(\"\") }\r\n    var description by remember { mutableStateOf(\"\") }\r\n    var selectedImageUri by remember { mutableStateOf<String?>(null) }\r\n\r\n    Scaffold(\r\n        topBar = {\r\n            TopAppBar(\r\n                title = {\r\n                    Text(\r\n                        \"Buat Postingan Baru\",\r\n                        fontFamily = GilroyFontFamily,\r\n                        fontWeight = FontWeight.SemiBold\r\n                    )\r\n                },\r\n                navigationIcon = {\r\n                    IconButton(onClick = { navController.popBackStack() }) {\r\n                        Icon(Icons.Default.ArrowBack, contentDescription = \"Kembali\")\r\n                    }\r\n                },\r\n                backgroundColor = Color.White,\r\n                elevation = DIMENS_4dp\r\n            )\r\n        }\r\n    ) { paddingValues ->\r\n        LazyColumn(\r\n            modifier = Modifier\r\n                .fillMaxSize()\r\n                .padding(paddingValues)\r\n                .padding(DIMENS_16dp),\r\n            verticalArrangement = Arrangement.spacedBy(DIMENS_16dp)\r\n        ) {\r\n            item {\r\n                // 1. INPUT JUDUL\r\n                OutlinedTextField(\r\n                    value = title,\r\n                    onValueChange = { title = it },\r\n                    label = { Text(\"Judul Postingan (Resep/Tips)\") },\r\n                    modifier = Modifier.fillMaxWidth(),\r\n                    shape = RoundedCornerShape(DIMENS_8dp),\r\n                    colors = TextFieldDefaults.outlinedTextFieldColors(\r\n                        focusedBorderColor = Green,\r\n                        unfocusedBorderColor = Color.Gray\r\n                    ),\r\n                    singleLine = true\r\n                )\r\n            }\r\n\r\n            item {\r\n                // 2. INPUT DESKRIPSI/ISI\r\n                OutlinedTextField(\r\n                    value = description,\r\n                    onValueChange = { description = it },\r\n                    label = { Text(\"Deskripsi atau Langkah-langkah Lengkap\") },\r\n                    modifier = Modifier\r\n                        .fillMaxWidth()\r\n                        .height(DIMENS_160dp),\r\n                    shape = RoundedCornerShape(DIMENS_8dp),\r\n                    colors = TextFieldDefaults.outlinedTextFieldColors(\r\n                        focusedBorderColor = Green,\r\n                        unfocusedBorderColor = Color.Gray\r\n                    )\r\n                )\r\n            }\r\n\r\n            item {\r\n                // 3. UPLOAD GAMBAR\r\n                UploadImageArea(\r\n                    selectedImageUri = selectedImageUri,\r\n                    onImagePicked = { uri -> selectedImageUri = uri },\r\n                    onRemoveImage = { selectedImageUri = null }\r\n                )\r\n            }\r\n\r\n            item {\r\n                Spacer(modifier = Modifier.height(DIMENS_8dp))\r\n            }\r\n\r\n            item {\r\n                // 4. TOMBOL KIRIM\r\n                Button(\r\n                    onClick = {\r\n                        if (title.isNotBlank() && description.isNotBlank()) {\r\n                            println(\"--- POSTINGAN BARU DIKIRIM ---\")\r\n                            navController.popBackStack()\r\n                        } else {\r\n                            println(\"Tolong lengkapi Judul dan Deskripsi.\")\r\n                        }\r\n                    },\r\n                    modifier = Modifier\r\n                        .fillMaxWidth()\r\n                        .height(DIMENS_48dp),\r\n                    shape = RoundedCornerShape(DIMENS_8dp),\r\n                    colors = ButtonDefaults.buttonColors(backgroundColor = Green)\r\n                ) {\r\n                    Text(\"Kirim Postingan\", color = Color.White, fontWeight = FontWeight.Bold)\r\n                }\r\n            }\r\n        }\r\n    }\r\n}\r\n\r\n// =========================================================================\r\n//                  KOMPONEN UPLOAD GAMBAR\r\n// =========================================================================\r\n\r\n@Composable\r\nfun UploadImageArea(\r\n    selectedImageUri: String?,\r\n    onImagePicked: (String) -> Unit,\r\n    onRemoveImage: () -> Unit\r\n) {\r\n    Card(\r\n        modifier = Modifier\r\n            .fillMaxWidth()\r\n            .height(if (selectedImageUri == null) DIMENS_160dp else DIMENS_200dp),\r\n        shape = RoundedCornerShape(DIMENS_12dp),\r\n        elevation = DIMENS_2dp\r\n    ) {\r\n        if (selectedImageUri == null) {\r\n            // Tampilan saat belum ada gambar\r\n            Column(\r\n                modifier = Modifier\r\n                    .fillMaxSize()\r\n                    .border(\r\n                        DIMENS_2dp,\r\n                        Color.LightGray.copy(alpha = 0.7f),\r\n                        RoundedCornerShape(DIMENS_12dp)\r\n                    )\r\n                    .clickable {\r\n                        // SIMULASI: Anggap gambar terpilih\r\n                        onImagePicked(\"content://simulasi/image_12345\")\r\n                    },\r\n                horizontalAlignment = Alignment.CenterHorizontally,\r\n                verticalArrangement = Arrangement.Center\r\n            ) {\r\n                Icon(\r\n                    Icons.Default.CloudUpload,\r\n                    contentDescription = \"Upload Gambar\",\r\n                    modifier = Modifier.size(DIMENS_48dp),\r\n                    tint = Color.Gray\r\n                )\r\n                Spacer(modifier = Modifier.height(DIMENS_8dp))\r\n                Text(\r\n                    \"Ketuk untuk Upload Gambar Masakan Anda\",\r\n                    color = Color.Gray,\r\n                    fontFamily = GilroyFontFamily\r\n                )\r\n            }\r\n        } else {\r\n            // Tampilan saat gambar sudah terpilih\r\n            Box(modifier = Modifier.fillMaxSize()) {\r\n                // SIMULASI: Gunakan placeholder image (pastikan Anda punya R.drawable.food_placeholder)\r\n                Image(\r\n                    painter = painterResource(id = R.drawable.food_resep),\r\n                    contentDescription = \"Gambar Terpilih\",\r\n                    modifier = Modifier.fillMaxSize()\r\n                )\r\n\r\n                // Tombol Hapus Gambar\r\n                IconButton(\r\n                    onClick = onRemoveImage,\r\n                    modifier = Modifier\r\n                        .align(Alignment.TopEnd)\r\n                        .padding(DIMENS_8dp)\r\n                        .clip(CircleShape)\r\n                        .background(Color.Black.copy(alpha = 0.5f))\r\n                ) {\r\n                    Icon(\r\n                        Icons.Default.Close,\r\n                        contentDescription = \"Hapus Gambar\",\r\n                        tint = Color.White\r\n                    )\r\n                }\r\n            }\r\n        }\r\n    }\r\n}\r\n\r\n@Preview(showBackground = true)\r\n@Composable\r\nfun AddPostScreenPreview() {\r\n    AddPostScreen()\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/komunitas/AddPostScreen.kt b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/komunitas/AddPostScreen.kt
+--- a/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/komunitas/AddPostScreen.kt	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/komunitas/AddPostScreen.kt	(date 1765710678241)
+@@ -1,5 +1,8 @@
+ package com.papb.projectakhirandroid.presentation.screen.komunitas
+ 
++import android.net.Uri
++import androidx.activity.compose.rememberLauncherForActivityResult
++import androidx.activity.result.contract.ActivityResultContracts
+ import androidx.compose.foundation.Image
+ import androidx.compose.foundation.background
+ import androidx.compose.foundation.border
+@@ -18,31 +21,64 @@
+ import androidx.compose.ui.Modifier
+ import androidx.compose.ui.draw.clip
+ import androidx.compose.ui.graphics.Color
++import androidx.compose.ui.layout.ContentScale
++import androidx.compose.ui.platform.LocalContext
+ import androidx.compose.ui.res.painterResource
++import androidx.compose.ui.text.TextStyle
+ import androidx.compose.ui.text.font.FontWeight
+ import androidx.compose.ui.tooling.preview.Preview
++// Hapus atau abaikan import viewModel, gunakan hiltViewModel:
++// import androidx.lifecycle.viewmodel.compose.viewModel
++import androidx.hilt.navigation.compose.hiltViewModel // ✅ Tambahkan/Pastikan Import ini
+ import androidx.navigation.NavController
+ import androidx.navigation.compose.rememberNavController
++import coil.compose.rememberAsyncImagePainter
+ import com.papb.projectakhirandroid.R
+-import com.papb.projectakhirandroid.ui.theme.* @Composable
+-fun AddPostScreen(navController: NavController = rememberNavController()) {
++import com.papb.projectakhirandroid.domain.model.Post
++import com.papb.projectakhirandroid.ui.theme.* // ASUMSI: Anda memiliki file KomunitasViewModel.kt yang mendefinisikan ViewModel Anda.
++// Jika KomunitasViewModel berada di package lain, pastikan Anda mengimpornya di sini.
++
++
++@Composable
++fun AddPostScreen(
++    navController: NavController,
++    // Ganti viewModel() dengan hiltViewModel() untuk injeksi dependency
++    viewModel: KomunitasViewModel = hiltViewModel()
++) {
+     var title by remember { mutableStateOf("") }
+     var description by remember { mutableStateOf("") }
+-    var selectedImageUri by remember { mutableStateOf<String?>(null) }
++    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
++    val context = LocalContext.current
++
++    // Default TopBar Title
++    val topBarTitle = "Buat Postingan ${if (postType == "resep") "Resep Baru" else if (postType == "tips") "Tips Baru" else ""}"
++
++    // Launcher untuk memilih gambar dari galeri
++    val imagePickerLauncher = rememberLauncherForActivityResult(
++        contract = ActivityResultContracts.GetContent(),
++        onResult = { uri: Uri? ->
++            selectedImageUri = uri
++        }
++    )
+ 
+     Scaffold(
+         topBar = {
+             TopAppBar(
+                 title = {
+                     Text(
+-                        "Buat Postingan Baru",
++                        topBarTitle,
+                         fontFamily = GilroyFontFamily,
+-                        fontWeight = FontWeight.SemiBold
++                        fontWeight = FontWeight.SemiBold,
++                        color = Black
+                     )
+                 },
+                 navigationIcon = {
+                     IconButton(onClick = { navController.popBackStack() }) {
+-                        Icon(Icons.Default.ArrowBack, contentDescription = "Kembali")
++                        Icon(
++                            Icons.Default.ArrowBack,
++                            contentDescription = "Kembali",
++                            tint = Black
++                        )
+                     }
+                 },
+                 backgroundColor = Color.White,
+@@ -62,7 +98,7 @@
+                 OutlinedTextField(
+                     value = title,
+                     onValueChange = { title = it },
+-                    label = { Text("Judul Postingan (Resep/Tips)") },
++                    label = { Text("Judul Postingan") },
+                     modifier = Modifier.fillMaxWidth(),
+                     shape = RoundedCornerShape(DIMENS_8dp),
+                     colors = TextFieldDefaults.outlinedTextFieldColors(
+@@ -79,6 +115,7 @@
+                     value = description,
+                     onValueChange = { description = it },
+                     label = { Text("Deskripsi atau Langkah-langkah Lengkap") },
++                    textStyle = TextStyle(fontSize = TEXT_SIZE_14sp),
+                     modifier = Modifier
+                         .fillMaxWidth()
+                         .height(DIMENS_160dp),
+@@ -94,7 +131,7 @@
+                 // 3. UPLOAD GAMBAR
+                 UploadImageArea(
+                     selectedImageUri = selectedImageUri,
+-                    onImagePicked = { uri -> selectedImageUri = uri },
++                    onImagePicked = { imagePickerLauncher.launch("image/*") },
+                     onRemoveImage = { selectedImageUri = null }
+                 )
+             }
+@@ -107,11 +144,21 @@
+                 // 4. TOMBOL KIRIM
+                 Button(
+                     onClick = {
+-                        if (title.isNotBlank() && description.isNotBlank()) {
+-                            println("--- POSTINGAN BARU DIKIRIM ---")
++                        if (title.isNotBlank() && description.isNotBlank() && postType != null) {
++                            // Buat objek Post
++                            val newPost = Post(
++                                type = postType,
++                                title = title,
++                                description = description,
++                                imageUrl = selectedImageUri
++                            )
++                            // Kirim ke ViewModel
++                            viewModel.addPost(newPost)
++
++                            // Navigasi kembali
+                             navController.popBackStack()
+                         } else {
+-                            println("Tolong lengkapi Judul dan Deskripsi.")
++                            println("Tolong lengkapi Judul, Deskripsi, dan pastikan postType tidak null.")
+                         }
+                     },
+                     modifier = Modifier
+@@ -133,8 +180,8 @@
+ 
+ @Composable
+ fun UploadImageArea(
+-    selectedImageUri: String?,
+-    onImagePicked: (String) -> Unit,
++    selectedImageUri: Uri?,
++    onImagePicked: () -> Unit,
+     onRemoveImage: () -> Unit
+ ) {
+     Card(
+@@ -154,10 +201,7 @@
+                         Color.LightGray.copy(alpha = 0.7f),
+                         RoundedCornerShape(DIMENS_12dp)
+                     )
+-                    .clickable {
+-                        // SIMULASI: Anggap gambar terpilih
+-                        onImagePicked("content://simulasi/image_12345")
+-                    },
++                    .clickable { onImagePicked() },
+                 horizontalAlignment = Alignment.CenterHorizontally,
+                 verticalArrangement = Arrangement.Center
+             ) {
+@@ -177,10 +221,12 @@
+         } else {
+             // Tampilan saat gambar sudah terpilih
+             Box(modifier = Modifier.fillMaxSize()) {
+-                // SIMULASI: Gunakan placeholder image (pastikan Anda punya R.drawable.food_placeholder)
++                val painter = rememberAsyncImagePainter(model = selectedImageUri)
++
+                 Image(
+-                    painter = painterResource(id = R.drawable.food_resep),
++                    painter = painter,
+                     contentDescription = "Gambar Terpilih",
++                    contentScale = ContentScale.Crop,
+                     modifier = Modifier.fillMaxSize()
+                 )
+ 
+@@ -207,5 +253,6 @@
+ @Preview(showBackground = true)
+ @Composable
+ fun AddPostScreenPreview() {
+-    AddPostScreen()
++    // Memberikan nilai default untuk preview
++    AddPostScreen(navController = rememberNavController(), postType = "resep")
+ }
+\ No newline at end of file
+Index: app/src/main/java/com/papb/projectakhirandroid/presentation/screen/home/HomeScreen.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.papb.projectakhirandroid.presentation.screen.home\r\n\r\nimport android.content.Context\r\nimport androidx.compose.foundation.layout.*\r\nimport androidx.compose.foundation.rememberScrollState\r\nimport androidx.compose.foundation.verticalScroll\r\nimport androidx.compose.material.Scaffold\r\nimport androidx.compose.runtime.Composable\r\nimport androidx.compose.runtime.collectAsState\r\nimport androidx.compose.runtime.getValue\r\nimport androidx.compose.ui.Modifier\r\nimport androidx.compose.ui.platform.LocalContext\r\nimport androidx.compose.ui.res.stringResource\r\nimport androidx.compose.ui.tooling.preview.Preview\r\nimport androidx.hilt.navigation.compose.hiltViewModel\r\nimport androidx.navigation.NavHostController\r\nimport androidx.navigation.compose.rememberNavController\r\nimport com.google.accompanist.pager.ExperimentalPagerApi\r\nimport com.papb.projectakhirandroid.R\r\nimport com.papb.projectakhirandroid.domain.model.ProductItem\r\nimport com.papb.projectakhirandroid.navigation.screen.Screen\r\nimport com.papb.projectakhirandroid.presentation.common.content.ListContentProduct\r\nimport com.papb.projectakhirandroid.presentation.component.SearchViewBar\r\nimport com.papb.projectakhirandroid.presentation.component.SliderBanner\r\nimport com.papb.projectakhirandroid.ui.theme.DIMENS_24dp\r\nimport com.papb.projectakhirandroid.utils.DataDummy\r\nimport com.papb.projectakhirandroid.utils.showToastShort\r\n\r\n@ExperimentalPagerApi\r\n@Composable\r\nfun HomeScreen(\r\n    modifier: Modifier = Modifier,\r\n    navController: NavHostController,\r\n    homeViewModel: HomeViewModel = hiltViewModel()\r\n) {\r\n    val mContext = LocalContext.current\r\n    val searchQuery by homeViewModel.searchQuery\r\n    val allProducts by homeViewModel.productList.collectAsState()\r\n\r\n    HomeContent(\r\n        modifier = modifier,\r\n        navController = navController,\r\n        searchQuery = searchQuery,\r\n        allProducts = allProducts,\r\n        onSearchValueChange = {\r\n            if (it.isNotEmpty()) navController.navigate(Screen.Search.route)\r\n        },\r\n        onClickToCart = { productItem ->\r\n            clickToCart(mContext, productItem, homeViewModel)\r\n        }\r\n    )\r\n}\r\n\r\n@ExperimentalPagerApi\r\n@Composable\r\nfun HomeContent(\r\n    modifier: Modifier = Modifier,\r\n    navController: NavHostController,\r\n    searchQuery: String,\r\n    allProducts: List<ProductItem>,\r\n    onSearchValueChange: (String) -> Unit,\r\n    onClickToCart: (ProductItem) -> Unit\r\n) {\r\n    Scaffold { padding ->\r\n        Column(\r\n            modifier = modifier\r\n                .verticalScroll(rememberScrollState())\r\n                .padding(padding)\r\n        ) {\r\n            SearchViewBar(\r\n                hint = stringResource(id = R.string.search_store),\r\n                query = searchQuery,\r\n                onValueChange = onSearchValueChange\r\n            )\r\n\r\n            SliderBanner()\r\n\r\n            Spacer(modifier = Modifier.height(DIMENS_24dp))\r\n\r\n            // REKOMENDASI\r\n            val rekomendasiTitle = \"Rekomendasi\"\r\n            ListContentProduct(\r\n                title = rekomendasiTitle,\r\n                // Batasi produk menjadi 5\r\n                products = allProducts.take(5),\r\n                navController = navController,\r\n                onClickToCart = onClickToCart,\r\n                onClickSeeAll = {\r\n                    navController.navigate(Screen.ProductList.passTitle(rekomendasiTitle))\r\n                }\r\n            )\r\n\r\n            Spacer(modifier = Modifier.height(DIMENS_24dp))\r\n\r\n            // TERLARIS\r\n            val terlarisTitle = \"Terlaris\"\r\n            ListContentProduct(\r\n                title = terlarisTitle,\r\n                // Batasi produk menjadi 5\r\n                products = allProducts.sortedByDescending { it.id }.take(5),\r\n                navController = navController,\r\n                onClickToCart = onClickToCart,\r\n                onClickSeeAll = {\r\n                    // Navigasi dengan judul \"Terlaris\"\r\n                    navController.navigate(Screen.ProductList.passTitle(terlarisTitle))\r\n                }\r\n            )\r\n\r\n            Spacer(modifier = Modifier.height(DIMENS_24dp))\r\n        }\r\n    }\r\n}\r\n\r\nfun clickToCart(context: Context, productItem: ProductItem, viewModel: HomeViewModel) {\r\n    // Memberikan feedback ke pengguna\r\n    context.showToastShort(\"Berhasil Masuk Keranjang: ${productItem.title}\")\r\n    // Menambahkan produk ke keranjang\r\n    viewModel.addCart(productItem.copy(isCart = true))\r\n}\r\n\r\n// Preview HeaderLocationHome dihapus\r\n\r\n@ExperimentalPagerApi\r\n@Preview(showBackground = true)\r\n@Composable\r\nfun HomeScreenPreview() {\r\n    // Menggunakan DataDummy untuk preview\r\n    HomeContent(\r\n        navController = rememberNavController(),\r\n        searchQuery = \"\",\r\n        allProducts = DataDummy.generateDummyProduct(),\r\n        onSearchValueChange = {},\r\n        onClickToCart = {}\r\n    )\r\n}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/home/HomeScreen.kt b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/home/HomeScreen.kt
+--- a/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/home/HomeScreen.kt	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/home/HomeScreen.kt	(date 1765708713430)
+@@ -18,7 +18,6 @@
+ import com.google.accompanist.pager.ExperimentalPagerApi
+ import com.papb.projectakhirandroid.R
+ import com.papb.projectakhirandroid.domain.model.ProductItem
+-import com.papb.projectakhirandroid.navigation.screen.Screen
+ import com.papb.projectakhirandroid.presentation.common.content.ListContentProduct
+ import com.papb.projectakhirandroid.presentation.component.SearchViewBar
+ import com.papb.projectakhirandroid.presentation.component.SliderBanner
+Index: app/src/main/java/com/papb/projectakhirandroid/presentation/screen/explore/ExploreScreen.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.papb.projectakhirandroid.presentation.screen.explore\r\n\r\nimport androidx.compose.foundation.layout.Arrangement\r\nimport androidx.compose.foundation.layout.Column\r\nimport androidx.compose.foundation.layout.padding\r\nimport androidx.compose.foundation.lazy.grid.GridCells\r\nimport androidx.compose.foundation.lazy.grid.LazyVerticalGrid\r\nimport androidx.compose.foundation.lazy.grid.items\r\nimport androidx.compose.material.Scaffold\r\nimport androidx.compose.material.Text\r\nimport androidx.compose.runtime.Composable\r\nimport androidx.compose.ui.Alignment\r\nimport androidx.compose.ui.Modifier\r\nimport androidx.compose.ui.res.stringResource\r\nimport androidx.compose.ui.text.font.FontWeight\r\nimport androidx.navigation.NavController\r\nimport androidx.navigation.compose.rememberNavController\r\nimport com.papb.projectakhirandroid.R\r\nimport com.papb.projectakhirandroid.navigation.screen.Screen\r\nimport com.papb.projectakhirandroid.presentation.common.card.CategoryCard\r\nimport com.papb.projectakhirandroid.presentation.component.SearchViewBar\r\nimport com.papb.projectakhirandroid.ui.theme.*\r\nimport com.papb.projectakhirandroid.utils.DataDummy\r\n\r\n@Composable\r\nfun ExploreScreen(\r\n    modifier: Modifier = Modifier,\r\n    navController: NavController = rememberNavController() // Default parameter untuk preview\r\n) {\r\n    Scaffold { paddingValues ->\r\n        Column(\r\n            modifier = modifier.padding(paddingValues)\r\n        ) {\r\n            Text(\r\n                modifier = Modifier\r\n                    .align(Alignment.CenterHorizontally)\r\n                    .padding(top = DIMENS_16dp),\r\n                text = stringResource(R.string.find_products),\r\n                fontFamily = GilroyFontFamily,\r\n                fontWeight = FontWeight.Bold,\r\n                fontSize = TEXT_SIZE_18sp,\r\n                color = Black\r\n            )\r\n\r\n            SearchViewBar(hint = stringResource(id = R.string.search_category))\r\n\r\n            LazyVerticalGrid(\r\n                modifier = Modifier.padding(start = DIMENS_16dp, end = DIMENS_16dp),\r\n                columns = GridCells.Fixed(2),\r\n                verticalArrangement = Arrangement.spacedBy(DIMENS_10dp),\r\n                horizontalArrangement = Arrangement.spacedBy(DIMENS_12dp),\r\n            ) {\r\n                items(DataDummy.generateDummyCategories()) { categoryItem ->\r\n                    CategoryCard(\r\n                        categoryItem = categoryItem,\r\n                        onItemClick = {\r\n                            val cleanTitle = categoryItem.title.replace(\"\\n\", \" \")\r\n                            navController.navigate(Screen.ProductList.passTitle(cleanTitle))\r\n                        }\r\n                    )\r\n                }\r\n            }\r\n        }\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/explore/ExploreScreen.kt b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/explore/ExploreScreen.kt
+--- a/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/explore/ExploreScreen.kt	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/explore/ExploreScreen.kt	(date 1765708723620)
+@@ -16,7 +16,6 @@
+ import androidx.navigation.NavController
+ import androidx.navigation.compose.rememberNavController
+ import com.papb.projectakhirandroid.R
+-import com.papb.projectakhirandroid.navigation.screen.Screen
+ import com.papb.projectakhirandroid.presentation.common.card.CategoryCard
+ import com.papb.projectakhirandroid.presentation.component.SearchViewBar
+ import com.papb.projectakhirandroid.ui.theme.*
+Index: gradle.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+># Project-wide Gradle settings.\r\n# IDE (e.g. Android Studio) users:\r\n# Gradle settings configured through the IDE *will override*\r\n# any settings specified in this file.\r\n# For more details on how to configure your build environment visit\r\n# http://www.gradle.org/docs/current/userguide/build_environment.html\r\n# Specifies the JVM arguments used for the daemon process.\r\n# The setting is particularly useful for tweaking memory settings.\r\norg.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8 --add-opens jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED\r\n# When configured, Gradle will run in incubating parallel mode.\r\n# This option should only be used with decoupled projects. More details, visit\r\n# http://www.gradle.org/docs/current/userguide/multi_project_builds.html#sec:decoupled_projects\r\n# org.gradle.parallel=true\r\n# AndroidX package structure to make it clearer which packages are bundled with the\r\n# Android operating system, and which are packaged with your app's APK\r\n# https://developer.android.com/topic/libraries/support-library/androidx-rn\r\nandroid.useAndroidX=true\r\n# Kotlin code style for this project: \"official\" or \"obsolete\":\r\nkotlin.code.style=official\r\n# Enables namespacing of each library's R class so that its R class includes only the\r\n# resources declared in the library itself and none from the library's dependencies,\r\n# thereby reducing the size of the R class for that library\r\nandroid.nonTransitiveRClass=true
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>ISO-8859-1
+===================================================================
+diff --git a/gradle.properties b/gradle.properties
+--- a/gradle.properties	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ b/gradle.properties	(date 1765709227069)
+@@ -20,4 +20,4 @@
+ # Enables namespacing of each library's R class so that its R class includes only the
+ # resources declared in the library itself and none from the library's dependencies,
+ # thereby reducing the size of the R class for that library
+-android.nonTransitiveRClass=true
+\ No newline at end of file
++android.nonTransitiveRClass=true
+Index: app/src/main/java/com/papb/projectakhirandroid/navigation/graph/RootNavigationGraph.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.papb.projectakhirandroid.navigation.graph\r\n\r\nimport androidx.compose.runtime.Composable\r\nimport androidx.navigation.NavHostController\r\nimport androidx.navigation.compose.NavHost\r\nimport androidx.navigation.compose.composable\r\nimport com.papb.projectakhirandroid.navigation.screen.Screen\r\nimport com.papb.projectakhirandroid.presentation.screen.MainScreen\r\nimport com.papb.projectakhirandroid.presentation.screen.login.LoginScreen\r\nimport com.papb.projectakhirandroid.presentation.screen.register.RegisterScreen\r\n\r\n@Composable\r\nfun RootNavigationGraph(navController: NavHostController) {\r\n    NavHost(\r\n        navController = navController,\r\n        route = Graph.ROOT, \r\n        startDestination = Screen.Login.route\r\n    ) {\r\n        composable(route = Screen.Login.route) {\r\n            LoginScreen(navController = navController)\r\n        }\r\n\r\n        composable(route = Screen.Register.route) {\r\n            RegisterScreen(navController = navController)\r\n        }\r\n\r\n        composable(route = Screen.Main.route) {\r\n            MainScreen()\r\n        }\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/papb/projectakhirandroid/navigation/graph/RootNavigationGraph.kt b/app/src/main/java/com/papb/projectakhirandroid/navigation/graph/RootNavigationGraph.kt
+--- a/app/src/main/java/com/papb/projectakhirandroid/navigation/graph/RootNavigationGraph.kt	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ b/app/src/main/java/com/papb/projectakhirandroid/navigation/graph/RootNavigationGraph.kt	(date 1765711609092)
+@@ -4,28 +4,38 @@
+ import androidx.navigation.NavHostController
+ import androidx.navigation.compose.NavHost
+ import androidx.navigation.compose.composable
++
++// Hapus import MainScreen yang menyebabkan konflik. Kita akan menggunakan FQN.
++// import com.papb.projectakhirandroid.presentation.screen.MainScreen
+ import com.papb.projectakhirandroid.navigation.screen.Screen
+-import com.papb.projectakhirandroid.presentation.screen.MainScreen
+-import com.papb.projectakhirandroid.presentation.screen.login.LoginScreen
+-import com.papb.projectakhirandroid.presentation.screen.register.RegisterScreen
++import com.papb.projectakhirandroid.presentation.screen.onboarding.OnBoardingScreen
++import com.papb.projectakhirandroid.presentation.screen.splash.SplashScreen
++
++// Mendefinisikan object Graph karena referensi Graph.ROOT tidak dapat diselesaikan
++// Jika Anda memiliki file Graph.kt, hapus definisi ini.
+ 
+ @Composable
+ fun RootNavigationGraph(navController: NavHostController) {
+     NavHost(
+         navController = navController,
+-        route = Graph.ROOT, 
+-        startDestination = Screen.Login.route
++        route = Graph.ROOT,
++        startDestination = Screen.Splash.route
+     ) {
+-        composable(route = Screen.Login.route) {
+-            LoginScreen(navController = navController)
++        // Rute: SPLASH SCREEN
++        composable(route = Screen.Splash.route) {
++            SplashScreen(navController = navController)
+         }
+ 
+-        composable(route = Screen.Register.route) {
+-            RegisterScreen(navController = navController)
++        // Rute: ONBOARDING SCREEN
++        composable(route = Screen.OnBoarding.route) {
++            OnBoardingScreen(navController = navController)
+         }
+ 
++        // Rute: MAIN GRAPH (NAVIGASI BERSARANG)
+         composable(route = Screen.Main.route) {
+-            MainScreen()
++            // Memanggil MainScreen menggunakan FQN (Fully Qualified Name)
++            // untuk memaksa kompiler menemukan referensi yang benar.
++            com.papb.projectakhirandroid.presentation.screen.MainScreen()
+         }
+     }
+ }
+\ No newline at end of file
+Index: .idea/AndroidProjectSystem.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/AndroidProjectSystem.xml b/.idea/AndroidProjectSystem.xml
+deleted file mode 100644
+--- a/.idea/AndroidProjectSystem.xml	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ /dev/null	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
+@@ -1,6 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<project version="4">
+-  <component name="AndroidProjectSystem">
+-    <option name="providerId" value="com.android.tools.idea.GradleProjectSystem" />
+-  </component>
+-</project>
+\ No newline at end of file
+Index: .idea/appInsightsSettings.xml
+===================================================================
+diff --git a/.idea/appInsightsSettings.xml b/.idea/appInsightsSettings.xml
+deleted file mode 100644
+--- a/.idea/appInsightsSettings.xml	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ /dev/null	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
+@@ -1,26 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<project version="4">
+-  <component name="AppInsightsSettings">
+-    <option name="tabSettings">
+-      <map>
+-        <entry key="Firebase Crashlytics">
+-          <value>
+-            <InsightsFilterSettings>
+-              <option name="connection">
+-                <ConnectionSetting>
+-                  <option name="appId" value="PLACEHOLDER" />
+-                  <option name="mobileSdkAppId" value="" />
+-                  <option name="projectId" value="" />
+-                  <option name="projectNumber" value="" />
+-                </ConnectionSetting>
+-              </option>
+-              <option name="signal" value="SIGNAL_UNSPECIFIED" />
+-              <option name="timeIntervalDays" value="THIRTY_DAYS" />
+-              <option name="visibilityType" value="ALL" />
+-            </InsightsFilterSettings>
+-          </value>
+-        </entry>
+-      </map>
+-    </option>
+-  </component>
+-</project>
+\ No newline at end of file
+Index: .idea/.gitignore
+===================================================================
+diff --git a/.idea/.gitignore b/.idea/.gitignore
+deleted file mode 100644
+--- a/.idea/.gitignore	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ /dev/null	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
+@@ -1,3 +0,0 @@
+-# Default ignored files
+-/shelf/
+-/workspace.xml
+Index: .idea/.name
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/.name b/.idea/.name
+deleted file mode 100644
+--- a/.idea/.name	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ /dev/null	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
+@@ -1,1 +0,0 @@
+-FreshMart
+\ No newline at end of file
+Index: .idea/deploymentTargetSelector.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/deploymentTargetSelector.xml b/.idea/deploymentTargetSelector.xml
+deleted file mode 100644
+--- a/.idea/deploymentTargetSelector.xml	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ /dev/null	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
+@@ -1,18 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<project version="4">
+-  <component name="deploymentTargetSelector">
+-    <selectionStates>
+-      <SelectionState runConfigName="app">
+-        <option name="selectionMode" value="DROPDOWN" />
+-        <DropdownSelection timestamp="2025-12-13T09:58:00.511113400Z">
+-          <Target type="DEFAULT_BOOT">
+-            <handle>
+-              <DeviceId pluginId="PhysicalDevice" identifier="serial=RRCWC067TAX" />
+-            </handle>
+-          </Target>
+-        </DropdownSelection>
+-        <DialogSelection />
+-      </SelectionState>
+-    </selectionStates>
+-  </component>
+-</project>
+\ No newline at end of file
+Index: .idea/runConfigurations.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/runConfigurations.xml b/.idea/runConfigurations.xml
+deleted file mode 100644
+--- a/.idea/runConfigurations.xml	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ /dev/null	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
+@@ -1,17 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<project version="4">
+-  <component name="RunConfigurationProducerService">
+-    <option name="ignoredProducers">
+-      <set>
+-        <option value="com.intellij.execution.junit.AbstractAllInDirectoryConfigurationProducer" />
+-        <option value="com.intellij.execution.junit.AllInPackageConfigurationProducer" />
+-        <option value="com.intellij.execution.junit.PatternConfigurationProducer" />
+-        <option value="com.intellij.execution.junit.TestInClassConfigurationProducer" />
+-        <option value="com.intellij.execution.junit.UniqueIdConfigurationProducer" />
+-        <option value="com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer" />
+-        <option value="org.jetbrains.kotlin.idea.junit.KotlinJUnitRunConfigurationProducer" />
+-        <option value="org.jetbrains.kotlin.idea.junit.KotlinPatternConfigurationProducer" />
+-      </set>
+-    </option>
+-  </component>
+-</project>
+\ No newline at end of file
+Index: .idea/gradle.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/gradle.xml b/.idea/gradle.xml
+deleted file mode 100644
+--- a/.idea/gradle.xml	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ /dev/null	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
+@@ -1,19 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<project version="4">
+-  <component name="GradleMigrationSettings" migrationVersion="1" />
+-  <component name="GradleSettings">
+-    <option name="linkedExternalProjectsSettings">
+-      <GradleProjectSettings>
+-        <option name="testRunner" value="CHOOSE_PER_TEST" />
+-        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+-        <option name="gradleJvm" value="#GRADLE_LOCAL_JAVA_HOME" />
+-        <option name="modules">
+-          <set>
+-            <option value="$PROJECT_DIR$" />
+-            <option value="$PROJECT_DIR$/app" />
+-          </set>
+-        </option>
+-      </GradleProjectSettings>
+-    </option>
+-  </component>
+-</project>
+\ No newline at end of file
+Index: .idea/androidTestResultsUserPreferences.xml
+===================================================================
+diff --git a/.idea/androidTestResultsUserPreferences.xml b/.idea/androidTestResultsUserPreferences.xml
+deleted file mode 100644
+--- a/.idea/androidTestResultsUserPreferences.xml	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ /dev/null	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
+@@ -1,37 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<project version="4">
+-  <component name="AndroidTestResultsUserPreferences">
+-    <option name="androidTestResultsTableState">
+-      <map>
+-        <entry key="318208317">
+-          <value>
+-            <AndroidTestResultsTableState>
+-              <option name="preferredColumnWidths">
+-                <map>
+-                  <entry key="2a52b56" value="120" />
+-                  <entry key="Duration" value="90" />
+-                  <entry key="Tests" value="360" />
+-                  <entry key="Xiaomi&#10; Redmi Note 5" value="120" />
+-                </map>
+-              </option>
+-            </AndroidTestResultsTableState>
+-          </value>
+-        </entry>
+-        <entry key="426942420">
+-          <value>
+-            <AndroidTestResultsTableState>
+-              <option name="preferredColumnWidths">
+-                <map>
+-                  <entry key="2a52b56" value="120" />
+-                  <entry key="Duration" value="90" />
+-                  <entry key="Tests" value="360" />
+-                  <entry key="Xiaomi&#10; Redmi Note 5" value="120" />
+-                </map>
+-              </option>
+-            </AndroidTestResultsTableState>
+-          </value>
+-        </entry>
+-      </map>
+-    </option>
+-  </component>
+-</project>
+\ No newline at end of file
+Index: .idea/kotlinc.xml
+===================================================================
+diff --git a/.idea/kotlinc.xml b/.idea/kotlinc.xml
+deleted file mode 100644
+--- a/.idea/kotlinc.xml	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ /dev/null	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
+@@ -1,6 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<project version="4">
+-  <component name="KotlinJpsPluginSettings">
+-    <option name="version" value="1.6.10" />
+-  </component>
+-</project>
+\ No newline at end of file
+Index: .idea/inspectionProfiles/Project_Default.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/inspectionProfiles/Project_Default.xml b/.idea/inspectionProfiles/Project_Default.xml
+deleted file mode 100644
+--- a/.idea/inspectionProfiles/Project_Default.xml	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ /dev/null	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
+@@ -1,77 +0,0 @@
+-<component name="InspectionProjectProfileManager">
+-  <profile version="1.0">
+-    <option name="myName" value="Project Default" />
+-    <inspection_tool class="ComposePreviewDimensionRespectsLimit" enabled="true" level="WARNING" enabled_by_default="true">
+-      <option name="composableFile" value="true" />
+-      <option name="previewFile" value="true" />
+-    </inspection_tool>
+-    <inspection_tool class="ComposePreviewMustBeTopLevelFunction" enabled="true" level="ERROR" enabled_by_default="true">
+-      <option name="composableFile" value="true" />
+-      <option name="previewFile" value="true" />
+-    </inspection_tool>
+-    <inspection_tool class="ComposePreviewNeedsComposableAnnotation" enabled="true" level="ERROR" enabled_by_default="true">
+-      <option name="composableFile" value="true" />
+-      <option name="previewFile" value="true" />
+-    </inspection_tool>
+-    <inspection_tool class="ComposePreviewNotSupportedInUnitTestFiles" enabled="true" level="ERROR" enabled_by_default="true">
+-      <option name="composableFile" value="true" />
+-      <option name="previewFile" value="true" />
+-    </inspection_tool>
+-    <inspection_tool class="GlancePreviewDimensionRespectsLimit" enabled="true" level="WARNING" enabled_by_default="true">
+-      <option name="composableFile" value="true" />
+-    </inspection_tool>
+-    <inspection_tool class="GlancePreviewMustBeTopLevelFunction" enabled="true" level="ERROR" enabled_by_default="true">
+-      <option name="composableFile" value="true" />
+-    </inspection_tool>
+-    <inspection_tool class="GlancePreviewNeedsComposableAnnotation" enabled="true" level="ERROR" enabled_by_default="true">
+-      <option name="composableFile" value="true" />
+-    </inspection_tool>
+-    <inspection_tool class="GlancePreviewNotSupportedInUnitTestFiles" enabled="true" level="ERROR" enabled_by_default="true">
+-      <option name="composableFile" value="true" />
+-    </inspection_tool>
+-    <inspection_tool class="PreviewAnnotationInFunctionWithParameters" enabled="true" level="ERROR" enabled_by_default="true">
+-      <option name="composableFile" value="true" />
+-      <option name="previewFile" value="true" />
+-    </inspection_tool>
+-    <inspection_tool class="PreviewApiLevelMustBeValid" enabled="true" level="ERROR" enabled_by_default="true">
+-      <option name="composableFile" value="true" />
+-      <option name="previewFile" value="true" />
+-    </inspection_tool>
+-    <inspection_tool class="PreviewDeviceShouldUseNewSpec" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+-      <option name="composableFile" value="true" />
+-      <option name="previewFile" value="true" />
+-    </inspection_tool>
+-    <inspection_tool class="PreviewDimensionRespectsLimit" enabled="true" level="WARNING" enabled_by_default="true">
+-      <option name="composableFile" value="true" />
+-      <option name="previewFile" value="true" />
+-    </inspection_tool>
+-    <inspection_tool class="PreviewFontScaleMustBeGreaterThanZero" enabled="true" level="ERROR" enabled_by_default="true">
+-      <option name="composableFile" value="true" />
+-      <option name="previewFile" value="true" />
+-    </inspection_tool>
+-    <inspection_tool class="PreviewMultipleParameterProviders" enabled="true" level="ERROR" enabled_by_default="true">
+-      <option name="composableFile" value="true" />
+-      <option name="previewFile" value="true" />
+-    </inspection_tool>
+-    <inspection_tool class="PreviewMustBeTopLevelFunction" enabled="true" level="ERROR" enabled_by_default="true">
+-      <option name="composableFile" value="true" />
+-      <option name="previewFile" value="true" />
+-    </inspection_tool>
+-    <inspection_tool class="PreviewNeedsComposableAnnotation" enabled="true" level="ERROR" enabled_by_default="true">
+-      <option name="composableFile" value="true" />
+-      <option name="previewFile" value="true" />
+-    </inspection_tool>
+-    <inspection_tool class="PreviewNotSupportedInUnitTestFiles" enabled="true" level="ERROR" enabled_by_default="true">
+-      <option name="composableFile" value="true" />
+-      <option name="previewFile" value="true" />
+-    </inspection_tool>
+-    <inspection_tool class="PreviewParameterProviderOnFirstParameter" enabled="true" level="ERROR" enabled_by_default="true">
+-      <option name="composableFile" value="true" />
+-      <option name="previewFile" value="true" />
+-    </inspection_tool>
+-    <inspection_tool class="PreviewPickerAnnotation" enabled="true" level="ERROR" enabled_by_default="true">
+-      <option name="composableFile" value="true" />
+-      <option name="previewFile" value="true" />
+-    </inspection_tool>
+-  </profile>
+-</component>
+\ No newline at end of file
+Index: .idea/deviceManager.xml
+===================================================================
+diff --git a/.idea/deviceManager.xml b/.idea/deviceManager.xml
+deleted file mode 100644
+--- a/.idea/deviceManager.xml	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ /dev/null	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
+@@ -1,13 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<project version="4">
+-  <component name="DeviceTable">
+-    <option name="columnSorters">
+-      <list>
+-        <ColumnSorterState>
+-          <option name="column" value="Name" />
+-          <option name="order" value="ASCENDING" />
+-        </ColumnSorterState>
+-      </list>
+-    </option>
+-  </component>
+-</project>
+\ No newline at end of file
+Index: .idea/vcs.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/vcs.xml b/.idea/vcs.xml
+deleted file mode 100644
+--- a/.idea/vcs.xml	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ /dev/null	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
+@@ -1,6 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<project version="4">
+-  <component name="VcsDirectoryMappings">
+-    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+-  </component>
+-</project>
+\ No newline at end of file
+Index: .idea/migrations.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/migrations.xml b/.idea/migrations.xml
+deleted file mode 100644
+--- a/.idea/migrations.xml	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ /dev/null	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
+@@ -1,10 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<project version="4">
+-  <component name="ProjectMigrations">
+-    <option name="MigrateToGradleLocalJavaHome">
+-      <set>
+-        <option value="$PROJECT_DIR$" />
+-      </set>
+-    </option>
+-  </component>
+-</project>
+\ No newline at end of file
+Index: app/src/main/java/com/papb/projectakhirandroid/presentation/screen/cart/CartScreen.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.papb.projectakhirandroid.presentation.screen.cart\r\n\r\nimport androidx.compose.foundation.layout.Column\r\nimport androidx.compose.foundation.layout.Spacer\r\nimport androidx.compose.foundation.layout.fillMaxSize\r\nimport androidx.compose.foundation.layout.fillMaxWidth\r\nimport androidx.compose.foundation.layout.height\r\nimport androidx.compose.foundation.layout.padding\r\nimport androidx.compose.material.Button\r\nimport androidx.compose.material.Scaffold\r\nimport androidx.compose.material.Text\r\nimport androidx.compose.runtime.Composable\r\nimport androidx.compose.runtime.collectAsState\r\nimport androidx.compose.runtime.getValue\r\nimport androidx.compose.ui.Alignment\r\nimport androidx.compose.ui.Modifier\r\nimport androidx.compose.ui.res.stringResource\r\nimport androidx.compose.ui.text.font.FontWeight\r\nimport androidx.hilt.navigation.compose.hiltViewModel\r\nimport androidx.navigation.NavController\r\nimport androidx.navigation.compose.rememberNavController\r\nimport com.papb.projectakhirandroid.R\r\nimport com.papb.projectakhirandroid.navigation.screen.Screen\r\nimport com.papb.projectakhirandroid.presentation.common.content.ListContentCart\r\nimport com.papb.projectakhirandroid.ui.theme.Black\r\nimport com.papb.projectakhirandroid.ui.theme.DIMENS_16dp\r\nimport com.papb.projectakhirandroid.ui.theme.GilroyFontFamily\r\nimport com.papb.projectakhirandroid.ui.theme.TEXT_SIZE_18sp\r\n\r\n\r\n@Composable\r\nfun CartScreen(\r\n    modifier: Modifier = Modifier,\r\n    navController: NavController = rememberNavController(),\r\n    cartViewModel: CartViewModel = hiltViewModel()\r\n) {\r\n    val productCartList by cartViewModel.productCartList.collectAsState()\r\n\r\n    Scaffold(\r\n        bottomBar = {\r\n            Button(\r\n                onClick = { navController.navigate(Screen.Checkout.route) },\r\n                modifier = Modifier\r\n                    .fillMaxWidth()\r\n                    .padding(DIMENS_16dp)\r\n            ) {\r\n                Text(text = \"Go to Checkout\")\r\n            }\r\n        }\r\n    ) { paddingValues ->\r\n        Column(\r\n            modifier = modifier\r\n                .fillMaxSize()\r\n                .padding(paddingValues)\r\n        ) {\r\n            Text(\r\n                modifier = Modifier\r\n                    .align(Alignment.CenterHorizontally)\r\n                    .padding(top = DIMENS_16dp),\r\n                text = stringResource(R.string.my_cart),\r\n                fontFamily = GilroyFontFamily,\r\n                fontWeight = FontWeight.Bold,\r\n                fontSize = TEXT_SIZE_18sp,\r\n                color = Black\r\n            )\r\n\r\n            Spacer(modifier = Modifier.height(DIMENS_16dp))\r\n\r\n            ListContentCart(\r\n                cartProducts = productCartList,\r\n                onClickDeleteCart = { productItem ->\r\n                    cartViewModel.deleteCart(productItem.copy(isCart = false))\r\n                }\r\n            )\r\n        }\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/cart/CartScreen.kt b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/cart/CartScreen.kt
+--- a/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/cart/CartScreen.kt	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/cart/CartScreen.kt	(date 1765708723699)
+@@ -20,7 +20,6 @@
+ import androidx.navigation.NavController
+ import androidx.navigation.compose.rememberNavController
+ import com.papb.projectakhirandroid.R
+-import com.papb.projectakhirandroid.navigation.screen.Screen
+ import com.papb.projectakhirandroid.presentation.common.content.ListContentCart
+ import com.papb.projectakhirandroid.ui.theme.Black
+ import com.papb.projectakhirandroid.ui.theme.DIMENS_16dp
+Index: app/src/main/java/com/papb/projectakhirandroid/presentation/screen/splash/SplashScreen.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.papb.projectakhirandroid.presentation.screen.splash\r\n\r\nimport android.view.animation.OvershootInterpolator\r\nimport androidx.compose.animation.core.Animatable\r\nimport androidx.compose.animation.core.tween\r\nimport androidx.compose.foundation.Image\r\nimport androidx.compose.foundation.background\r\nimport androidx.compose.foundation.layout.Box\r\nimport androidx.compose.foundation.layout.fillMaxSize\r\nimport androidx.compose.foundation.layout.padding\r\nimport androidx.compose.runtime.*\r\nimport androidx.compose.ui.Alignment\r\nimport androidx.compose.ui.Modifier\r\nimport androidx.compose.ui.draw.scale\r\nimport androidx.compose.ui.res.painterResource\r\nimport androidx.compose.ui.res.stringResource\r\nimport androidx.compose.ui.tooling.preview.Preview\r\nimport androidx.compose.ui.unit.dp\r\nimport androidx.hilt.navigation.compose.hiltViewModel\r\nimport androidx.navigation.NavHostController\r\nimport com.papb.projectakhirandroid.R\r\nimport com.papb.projectakhirandroid.navigation.screen.Screen\r\nimport com.papb.projectakhirandroid.ui.theme.Green\r\nimport kotlinx.coroutines.delay\r\n\r\n@Composable\r\nfun SplashScreen(\r\n    navController: NavHostController,\r\n    splashViewModel: SplashViewModel = hiltViewModel()\r\n) {\r\n    val onBoardingIsCompleted by splashViewModel.onBoardingIsCompleted.collectAsState()\r\n    val scale = remember { Animatable(0f) }\r\n\r\n    LaunchedEffect(key1 = true) {\r\n        scale.animateTo(\r\n            targetValue = 0.8f,\r\n            animationSpec = tween(\r\n                durationMillis = 800,\r\n                easing = {\r\n                    OvershootInterpolator(4f).getInterpolation(it)\r\n                }\r\n            )\r\n        )\r\n        delay(1200L)\r\n        navController.popBackStack()\r\n\r\n        if (onBoardingIsCompleted) {\r\n            navController.navigate(Screen.Login.route)\r\n        } else {\r\n            navController.navigate(Screen.OnBoarding.route)\r\n        }\r\n    }\r\n\r\n    Splash(scale = scale.value)\r\n}\r\n\r\n@Composable\r\nfun Splash(\r\n    modifier: Modifier = Modifier,\r\n    scale: Float\r\n) {\r\n    Box(\r\n        modifier = modifier\r\n            .background(Green)\r\n            .fillMaxSize(),\r\n        contentAlignment = Alignment.Center\r\n    ) {\r\n        Image(\r\n            modifier = Modifier\r\n                .scale(scale)\r\n                .padding(all = 64.dp),\r\n            painter = painterResource(id = R.drawable.img_logo_app),\r\n            contentDescription = stringResource(R.string.logo_app)\r\n        )\r\n    }\r\n}\r\n\r\n@Preview\r\n@Composable\r\nfun SplashScreenPreview() {\r\n    Splash(scale = 0f)\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/splash/SplashScreen.kt b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/splash/SplashScreen.kt
+--- a/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/splash/SplashScreen.kt	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/splash/SplashScreen.kt	(date 1765708726144)
+@@ -19,6 +19,7 @@
+ import androidx.hilt.navigation.compose.hiltViewModel
+ import androidx.navigation.NavHostController
+ import com.papb.projectakhirandroid.R
++import com.papb.projectakhirandroid.navigation.graph.Graph
+ import com.papb.projectakhirandroid.navigation.screen.Screen
+ import com.papb.projectakhirandroid.ui.theme.Green
+ import kotlinx.coroutines.delay
+@@ -44,11 +45,8 @@
+         delay(1200L)
+         navController.popBackStack()
+ 
+-        if (onBoardingIsCompleted) {
+-            navController.navigate(Screen.Login.route)
+-        } else {
+-            navController.navigate(Screen.OnBoarding.route)
+-        }
++        if (onBoardingIsCompleted) navController.navigate(Graph.MAIN)
++        else navController.navigate(Screen.OnBoarding.route)
+     }
+ 
+     Splash(scale = scale.value)
+Index: app/src/main/java/com/papb/projectakhirandroid/presentation/screen/checkout/CheckoutScreen.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.papb.projectakhirandroid.presentation.screen.checkout\r\n\r\nimport androidx.compose.foundation.layout.Column\r\nimport androidx.compose.foundation.layout.Spacer\r\nimport androidx.compose.foundation.layout.fillMaxSize\r\nimport androidx.compose.foundation.layout.fillMaxWidth\r\nimport androidx.compose.foundation.layout.height\r\nimport androidx.compose.foundation.layout.padding\r\nimport androidx.compose.foundation.lazy.LazyColumn\r\nimport androidx.compose.foundation.lazy.items\r\nimport androidx.compose.material.Button\r\nimport androidx.compose.material.Divider\r\nimport androidx.compose.material.Scaffold\r\nimport androidx.compose.material.Text\r\nimport androidx.compose.material.TopAppBar\r\nimport androidx.compose.runtime.Composable\r\nimport androidx.compose.runtime.collectAsState\r\nimport androidx.compose.runtime.getValue\r\nimport androidx.compose.ui.Modifier\r\nimport androidx.compose.ui.text.font.FontWeight\r\nimport androidx.hilt.navigation.compose.hiltViewModel\r\nimport androidx.navigation.NavController\r\nimport com.papb.projectakhirandroid.navigation.screen.Screen\r\nimport com.papb.projectakhirandroid.presentation.common.content.ContentCart\r\nimport com.papb.projectakhirandroid.ui.theme.*\r\n\r\n@Composable\r\nfun CheckoutScreen(\r\n    navController: NavController,\r\n    checkoutViewModel: CheckoutViewModel = hiltViewModel()\r\n) {\r\n    val productCartList by checkoutViewModel.productCartList.collectAsState()\r\n\r\n    Scaffold(\r\n        topBar = {\r\n            TopAppBar(title = { Text(\"Checkout\") })\r\n        },\r\n        bottomBar = {\r\n            Button(\r\n                onClick = { navController.navigate(Screen.Invoice.route) },\r\n                modifier = Modifier\r\n                    .fillMaxWidth()\r\n                    .padding(DIMENS_16dp)\r\n            ) {\r\n                Text(text = \"Bayar\")\r\n            }\r\n        }\r\n    ) { paddingValues ->\r\n        Column(\r\n            modifier = Modifier\r\n                .fillMaxSize()\r\n                .padding(paddingValues)\r\n                .padding(DIMENS_16dp)\r\n        ) {\r\n            Text(\r\n                text = \"Ringkasan Pesanan\",\r\n                fontFamily = GilroyFontFamily,\r\n                fontWeight = FontWeight.Bold,\r\n                fontSize = TEXT_SIZE_18sp,\r\n                color = Black\r\n            )\r\n\r\n            Spacer(modifier = Modifier.height(DIMENS_16dp))\r\n\r\n            LazyColumn(\r\n                modifier = Modifier.weight(1f)\r\n            ) {\r\n                items(productCartList) { item ->\r\n                    // Menggunakan komponen dari keranjang untuk tampilan yang konsisten\r\n                    ContentCart(productItem = item)\r\n                    Divider()\r\n                }\r\n            }\r\n        }\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/checkout/CheckoutScreen.kt b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/checkout/CheckoutScreen.kt
+--- a/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/checkout/CheckoutScreen.kt	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/checkout/CheckoutScreen.kt	(date 1765708723690)
+@@ -20,7 +20,6 @@
+ import androidx.compose.ui.text.font.FontWeight
+ import androidx.hilt.navigation.compose.hiltViewModel
+ import androidx.navigation.NavController
+-import com.papb.projectakhirandroid.navigation.screen.Screen
+ import com.papb.projectakhirandroid.presentation.common.content.ContentCart
+ import com.papb.projectakhirandroid.ui.theme.*
+ 
+Index: app/src/main/java/com/papb/projectakhirandroid/presentation/screen/about/AboutScreen.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.papb.projectakhirandroid.presentation.screen.about\r\n\r\nimport android.app.Activity\r\nimport androidx.compose.foundation.layout.*\r\nimport androidx.compose.foundation.shape.RoundedCornerShape\r\nimport androidx.compose.material.Button\r\nimport androidx.compose.material.ButtonDefaults\r\nimport androidx.compose.material.Icon\r\nimport androidx.compose.material.Text\r\nimport androidx.compose.material.icons.Icons\r\nimport androidx.compose.material.icons.filled.ExitToApp\r\nimport androidx.compose.runtime.Composable\r\nimport androidx.compose.runtime.collectAsState\r\nimport androidx.compose.runtime.getValue\r\nimport androidx.compose.ui.Modifier\r\nimport androidx.compose.ui.graphics.Color\r\nimport androidx.compose.ui.platform.LocalContext\r\nimport androidx.compose.ui.res.stringResource\r\nimport androidx.compose.ui.text.font.FontWeight\r\nimport androidx.compose.ui.text.style.TextAlign\r\nimport androidx.compose.ui.tooling.preview.Preview\r\nimport androidx.hilt.navigation.compose.hiltViewModel\r\nimport androidx.navigation.NavController\r\nimport com.papb.projectakhirandroid.R\r\nimport com.papb.projectakhirandroid.navigation.screen.Screen\r\nimport com.papb.projectakhirandroid.presentation.common.card.ProfileCard\r\nimport com.papb.projectakhirandroid.presentation.common.content.ListContentAbout\r\nimport com.papb.projectakhirandroid.ui.theme.*\r\n\r\n@Composable\r\nfun AboutScreen(\r\n    modifier: Modifier = Modifier,\r\n    navController: NavController,\r\n    profileViewModel: ProfileViewModel = hiltViewModel()\r\n) {\r\n    val activity = LocalContext.current as Activity\r\n    val name by profileViewModel.name.collectAsState()\r\n    val email by profileViewModel.email.collectAsState()\r\n    val imageUri by profileViewModel.profileImageUri.collectAsState()\r\n\r\n    Column(\r\n        modifier = modifier\r\n            .padding(top = DIMENS_24dp)\r\n            .fillMaxSize()\r\n    ) {\r\n        ProfileCard(\r\n            name = name,\r\n            email = email,\r\n            imageUri = imageUri\r\n        )\r\n\r\n        Button(\r\n            onClick = { navController.navigate(Screen.EditProfile.route) },\r\n            modifier = Modifier\r\n                .fillMaxWidth()\r\n                .padding(horizontal = DIMENS_16dp, vertical = DIMENS_8dp),\r\n            colors = ButtonDefaults.buttonColors(backgroundColor = Green)\r\n        ) {\r\n            Text(\r\n                text = \"Edit Profile\",\r\n                color = Color.Black,\r\n                fontFamily = GilroyFontFamily,\r\n                fontWeight = FontWeight.SemiBold\r\n            )\r\n        }\r\n\r\n        ListContentAbout(onItemClick = {\r\n            if (it == \"Koleksi\") {\r\n                navController.navigate(\"collection_graph\")\r\n            }\r\n        })\r\n\r\n        Spacer(modifier = Modifier.height(DIMENS_32dp))\r\n\r\n        ButtonLogout { activity.finish() }\r\n    }\r\n}\r\n\r\n@Composable\r\nfun ButtonLogout(\r\n    modifier: Modifier = Modifier,\r\n    onClick: () -> Unit\r\n) {\r\n    Button(\r\n        modifier = modifier\r\n            .padding(DIMENS_16dp)\r\n            .height(DIMENS_48dp)\r\n            .fillMaxWidth(),\r\n        shape = RoundedCornerShape(DIMENS_16dp),\r\n        elevation = ButtonDefaults.elevation(DIMENS_2dp),\r\n        colors = ButtonDefaults.buttonColors(backgroundColor = GrayBackground),\r\n        onClick = { onClick.invoke() }\r\n    ) {\r\n        Icon(\r\n            imageVector = Icons.Default.ExitToApp,\r\n            contentDescription = stringResource(R.string.logout),\r\n            tint = Green\r\n        )\r\n\r\n        Text(\r\n            modifier = Modifier\r\n                .fillMaxWidth(),\r\n            text = stringResource(id = R.string.logout),\r\n            color = Green,\r\n            textAlign = TextAlign.Center,\r\n            fontFamily = GilroyFontFamily,\r\n            fontWeight = FontWeight.SemiBold,\r\n        )\r\n    }\r\n}\r\n\r\n@Preview(showBackground = true)\r\n@Composable\r\nfun AboutScreenPreview() {\r\n    // This preview will not show real data, but it will prevent the crash.\r\n    Column(\r\n        modifier = Modifier\r\n            .padding(top = DIMENS_24dp)\r\n            .fillMaxSize()\r\n    ) {\r\n        ProfileCard(name = \"John Doe\", email = \"johndoe@example.com\", imageUri = null)\r\n\r\n        Button(\r\n            onClick = { },\r\n            modifier = Modifier\r\n                .fillMaxWidth()\r\n                .padding(horizontal = DIMENS_16dp, vertical = DIMENS_8dp),\r\n            colors = ButtonDefaults.buttonColors(backgroundColor = Green)\r\n        ) {\r\n            Text(\r\n                text = \"Edit Profile\",\r\n                color = Color.Black,\r\n                fontFamily = GilroyFontFamily,\r\n                fontWeight = FontWeight.SemiBold\r\n            )\r\n        }\r\n\r\n        ListContentAbout(onItemClick = {})\r\n\r\n        Spacer(modifier = Modifier.height(DIMENS_32dp))\r\n\r\n        ButtonLogout { }\r\n    }\r\n}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/about/AboutScreen.kt b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/about/AboutScreen.kt
+--- a/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/about/AboutScreen.kt	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/about/AboutScreen.kt	(date 1765708726194)
+@@ -22,7 +22,6 @@
+ import androidx.hilt.navigation.compose.hiltViewModel
+ import androidx.navigation.NavController
+ import com.papb.projectakhirandroid.R
+-import com.papb.projectakhirandroid.navigation.screen.Screen
+ import com.papb.projectakhirandroid.presentation.common.card.ProfileCard
+ import com.papb.projectakhirandroid.presentation.common.content.ListContentAbout
+ import com.papb.projectakhirandroid.ui.theme.*
+Index: app/src/main/java/com/papb/projectakhirandroid/presentation/common/card/ProductCard.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.papb.projectakhirandroid.presentation.common.card\r\n\r\nimport androidx.compose.foundation.BorderStroke\r\nimport androidx.compose.foundation.Image\r\nimport androidx.compose.foundation.clickable\r\nimport androidx.compose.foundation.layout.*\r\nimport androidx.compose.foundation.shape.RoundedCornerShape\r\nimport androidx.compose.material.*\r\nimport androidx.compose.material.icons.Icons\r\nimport androidx.compose.material.icons.filled.Add\r\nimport androidx.compose.runtime.Composable\r\nimport androidx.compose.ui.Alignment\r\nimport androidx.compose.ui.Modifier\r\nimport androidx.compose.ui.graphics.Color\r\nimport androidx.compose.ui.res.painterResource\r\nimport androidx.compose.ui.res.stringResource\r\nimport androidx.compose.ui.text.font.FontWeight\r\nimport androidx.compose.ui.tooling.preview.Preview\r\nimport androidx.compose.ui.unit.dp\r\nimport androidx.navigation.NavController\r\nimport androidx.navigation.compose.rememberNavController\r\nimport com.papb.projectakhirandroid.domain.model.ProductItem\r\nimport com.papb.projectakhirandroid.navigation.screen.Screen\r\nimport com.papb.projectakhirandroid.ui.theme.*\r\nimport com.papb.projectakhirandroid.R\r\n\r\n\r\n@Composable\r\nfun ProductCard(\r\n    modifier: Modifier = Modifier,\r\n    productItem: ProductItem,\r\n    navController: NavController,\r\n    onClickToCart: (ProductItem) -> Unit\r\n) {\r\n    Card(\r\n        shape = RoundedCornerShape(DIMENS_12dp),\r\n        border = BorderStroke(width = 1.dp, color = GrayBorderStroke),\r\n        modifier = modifier\r\n            .width(DIMENS_174dp)\r\n            .clickable {\r\n                navController.navigate(Screen.Details.passProductId(productId = productItem.id))\r\n            }\r\n    ) {\r\n        Column(\r\n            modifier = Modifier\r\n                .fillMaxWidth()\r\n                .padding(DIMENS_12dp)\r\n        ) {\r\n            Image(\r\n                painter = painterResource(id = productItem.image),\r\n                contentDescription = stringResource(R.string.image_product),\r\n                modifier = Modifier\r\n                    .align(Alignment.CenterHorizontally)\r\n                    .fillMaxWidth()\r\n                    .height(DIMENS_80dp)\r\n            )\r\n\r\n            Spacer(modifier = Modifier.height(DIMENS_24dp))\r\n\r\n            Text(\r\n                text = productItem.title,\r\n                fontFamily = GilroyFontFamily,\r\n                fontWeight = FontWeight.Bold,\r\n                color = Black,\r\n                fontSize = TEXT_SIZE_16sp\r\n            )\r\n\r\n            Spacer(modifier = Modifier.height(DIMENS_6dp))\r\n\r\n            Text(\r\n                text = productItem.unit,\r\n                fontFamily = GilroyFontFamily,\r\n                fontWeight = FontWeight.Medium,\r\n                color = GraySecondTextColor,\r\n                fontSize = TEXT_SIZE_12sp\r\n            )\r\n\r\n            Spacer(modifier = Modifier.height(DIMENS_20dp))\r\n\r\n            Row(\r\n                horizontalArrangement = Arrangement.SpaceBetween,\r\n                modifier = Modifier.fillMaxWidth()\r\n            ) {\r\n                Text(\r\n                    text = \"Rp ${productItem.price.toInt()}\",\r\n                    fontFamily = GilroyFontFamily,\r\n                    fontWeight = FontWeight.Bold,\r\n                    color = Black,\r\n                    modifier = Modifier.align(Alignment.CenterVertically),\r\n                    fontSize = TEXT_SIZE_18sp\r\n                )\r\n\r\n                Button(\r\n                    modifier = Modifier.size(DIMENS_46dp),\r\n                    colors = ButtonDefaults.buttonColors(backgroundColor = Green),\r\n                    shape = RoundedCornerShape(DIMENS_14dp),\r\n                    contentPadding = PaddingValues(DIMENS_10dp),\r\n                    onClick = {\r\n                        onClickToCart.invoke(productItem)\r\n                    }\r\n                )\r\n                {\r\n                    Icon(\r\n                        modifier = Modifier.fillMaxSize(),\r\n                        imageVector = Icons.Default.Add,\r\n                        tint = Color.White,\r\n                        contentDescription = stringResource(id = R.string.add)\r\n                    )\r\n                }\r\n            }\r\n\r\n        }\r\n    }\r\n}\r\n\r\n@Preview\r\n@Composable\r\nfun ItemProductPreview() {\r\n    ProductCard(\r\n        productItem = ProductItem(\r\n            id = 1,\r\n            title = \"Organic Bananas\",\r\n            description = \"\",\r\n            image = R.drawable.product10,\r\n            unit = \"7pcs, Priceg\",\r\n            price = 4.99,\r\n            nutritions = \"100gr\",\r\n            review = 4.0,\r\n            category = \"Buah & Sayur\" // Added the missing parameter\r\n        ),\r\n        navController = rememberNavController(),\r\n        onClickToCart = {}\r\n    )\r\n}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/papb/projectakhirandroid/presentation/common/card/ProductCard.kt b/app/src/main/java/com/papb/projectakhirandroid/presentation/common/card/ProductCard.kt
+--- a/app/src/main/java/com/papb/projectakhirandroid/presentation/common/card/ProductCard.kt	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ b/app/src/main/java/com/papb/projectakhirandroid/presentation/common/card/ProductCard.kt	(date 1765708723722)
+@@ -20,7 +20,6 @@
+ import androidx.navigation.NavController
+ import androidx.navigation.compose.rememberNavController
+ import com.papb.projectakhirandroid.domain.model.ProductItem
+-import com.papb.projectakhirandroid.navigation.screen.Screen
+ import com.papb.projectakhirandroid.ui.theme.*
+ import com.papb.projectakhirandroid.R
+ 
+Index: app/src/main/java/com/papb/projectakhirandroid/presentation/screen/komunitas/KomunitasViewModel.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/komunitas/KomunitasViewModel.kt b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/komunitas/KomunitasViewModel.kt
+new file mode 100644
+--- /dev/null	(date 1765708726206)
++++ b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/komunitas/KomunitasViewModel.kt	(date 1765708726206)
+@@ -0,0 +1,35 @@
++package com.papb.projectakhirandroid.presentation.screen.komunitas
++
++import androidx.lifecycle.ViewModel
++import androidx.lifecycle.viewModelScope
++import com.papb.projectakhirandroid.data.model.Post
++import kotlinx.coroutines.flow.MutableStateFlow
++import kotlinx.coroutines.flow.StateFlow
++import kotlinx.coroutines.flow.asStateFlow
++import kotlinx.coroutines.flow.update
++import kotlinx.coroutines.launch
++
++// Jika Anda menggunakan Hilt, tambahkan @HiltViewModel dan inject dependensi
++// import dagger.hilt.android.lifecycle.HiltViewModel
++// import javax.inject.Inject
++
++// @HiltViewModel
++class KomunitasViewModel : ViewModel() { // Jika menggunakan Hilt, hapus constructor jika tidak ada injection
++
++    // StateFlow untuk menyimpan daftar semua postingan
++    private val _posts = MutableStateFlow<List<Post>>(emptyList())
++    val posts: StateFlow<List<Post>> = _posts.asStateFlow()
++
++    /**
++     * Menambahkan postingan baru ke daftar.
++     */
++    fun addPost(newPost: Post) {
++        // Melakukan update pada StateFlow di coroutine scope
++        viewModelScope.launch {
++            _posts.update { currentPosts ->
++                // Menambahkan postingan baru di awal daftar
++                listOf(newPost) + currentPosts
++            }
++        }
++    }
++}
+\ No newline at end of file
+Index: app/src/main/java/com/papb/projectakhirandroid/domain/model/Post.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/papb/projectakhirandroid/domain/model/Post.kt b/app/src/main/java/com/papb/projectakhirandroid/domain/model/Post.kt
+new file mode 100644
+--- /dev/null	(date 1765708723707)
++++ b/app/src/main/java/com/papb/projectakhirandroid/domain/model/Post.kt	(date 1765708723707)
+@@ -0,0 +1,11 @@
++package com.papb.projectakhirandroid.domain.model
++
++import android.net.Uri
++
++data class Post(
++    val id: Long = System.currentTimeMillis(), // ID unik berdasarkan timestamp
++    val type: String, // "resep" atau "tips"
++    val title: String,
++    val description: String,
++    val imageUrl: Uri? // Menggunakan Uri untuk gambar dari galeri
++)
+\ No newline at end of file
+Index: app/src/main/java/com/papb/projectakhirandroid/presentation/screen/Screen.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/Screen.kt b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/Screen.kt
+new file mode 100644
+--- /dev/null	(date 1765710805945)
++++ b/app/src/main/java/com/papb/projectakhirandroid/presentation/screen/Screen.kt	(date 1765710805945)
+@@ -0,0 +1,36 @@
++package com.papb.projectakhirandroid.navigation.screen
++
++// Mengubah Screen menjadi object karena sekarang semua anggota adalah data object
++sealed class Screen(val route: String) {
++    // --- Rute Root Navigation ---
++    data object Splash : Screen("splash_screen")
++    data object OnBoarding : Screen("onboarding_screen")
++    data object Main : Screen("main_root") // <-- Rute untuk MainNavGraph
++
++    // --- Rute Screens Utama ---
++    data object EditProfile : Screen("edit_profile_screen")
++    data object Checkout : Screen("checkout_screen")
++    data object Invoice : Screen("invoice_screen")
++
++    // Rute Detail Produk (menerima ID produk)
++    data object Details : Screen("details_screen/{productId}") {
++        // Fungsi helper untuk membangun rute dengan ID (Ditempatkan di dalam Details)
++        fun createRouteWithProductId(productId: Int): String {
++            return "details_screen/$productId"
++        }
++    }
++
++    // Rute Search (menerima query, opsional)
++    data object Search : Screen("search_screen?query={query}")
++
++    // Rute Daftar Produk (menerima judul kategori/list)
++    data object ProductList : Screen("product_list_screen/{title}")
++
++    // Rute Komunitas dengan Argument Tipe
++    data object AddPost : Screen("add_post_screen/{type}") {
++        fun createRoute(type: String) = "add_post_screen/$type"
++    }
++
++    // NOTE: Fungsi createRouteWithProductId dihapus dari luar,
++    // karena sudah ada di dalam data object Details.
++}
+\ No newline at end of file
+Index: app/src/main/java/com/papb/projectakhirandroid/ui/theme/Dimens.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.papb.projectakhirandroid.ui.theme\r\n\r\nimport androidx.compose.ui.unit.dp\r\nimport androidx.compose.ui.unit.sp\r\n\r\n/* Density Independent (dp) */\r\nval DIMENS_1dp = 1.dp\r\nval DIMENS_2dp = 2.dp\r\nval DIMENS_4dp = 4.dp\r\nval DIMENS_6dp = 6.dp\r\nval DIMENS_8dp = 8.dp\r\nval DIMENS_10dp = 10.dp\r\nval DIMENS_12dp = 12.dp\r\nval DIMENS_14dp = 14.dp\r\nval DIMENS_16dp = 16.dp\r\nval DIMENS_18dp = 18.dp\r\nval DIMENS_20dp = 20.dp\r\nval DIMENS_24dp = 24.dp\r\nval DIMENS_32dp = 32.dp\r\nval DIMENS_40dp = 40.dp\r\nval DIMENS_46dp = 46.dp\r\nval DIMENS_48dp = 48.dp\r\nval DIMENS_64dp = 64.dp\r\nval DIMENS_68dp = 68.dp\r\nval DIMENS_80dp = 80.dp\r\nval DIMENS_90dp = 90.dp\r\nval DIMENS_108dp = 108.dp\r\nval DIMENS_114dp = 114.dp\r\nval DIMENS_160dp = 160.dp // <-- PERBAIKAN: Konstanta yang hilang\r\nval DIMENS_174dp = 174.dp\r\nval DIMENS_200dp = 200.dp\r\nval DIMENS_248dp = 248.dp\r\nval DIMENS_353dp = 353.dp\r\n\r\n/* Scale Independent (sp) */\r\nval TEXT_SIZE_10sp = 10.sp\r\nval TEXT_SIZE_12sp = 12.sp\r\nval TEXT_SIZE_14sp = 14.sp\r\nval TEXT_SIZE_16sp = 16.sp\r\nval TEXT_SIZE_18sp = 18.sp\r\nval TEXT_SIZE_20sp = 20.sp\r\nval TEXT_SIZE_24sp = 24.sp\r\nval TEXT_SIZE_49sp = 49.sp
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/papb/projectakhirandroid/ui/theme/Dimens.kt b/app/src/main/java/com/papb/projectakhirandroid/ui/theme/Dimens.kt
+--- a/app/src/main/java/com/papb/projectakhirandroid/ui/theme/Dimens.kt	(revision 2297868ce51c5ff47ac7ef90686168bfce85acb5)
++++ b/app/src/main/java/com/papb/projectakhirandroid/ui/theme/Dimens.kt	(date 1765708713443)
+@@ -26,7 +26,7 @@
+ val DIMENS_90dp = 90.dp
+ val DIMENS_108dp = 108.dp
+ val DIMENS_114dp = 114.dp
+-val DIMENS_160dp = 160.dp // <-- PERBAIKAN: Konstanta yang hilang
++val DIMENS_160dp = 160.dp
+ val DIMENS_174dp = 174.dp
+ val DIMENS_200dp = 200.dp
+ val DIMENS_248dp = 248.dp

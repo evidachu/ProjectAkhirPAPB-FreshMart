@@ -20,9 +20,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.papb.projectakhirandroid.domain.model.ProductItem
-import com.papb.projectakhirandroid.navigation.screen.Screen
 import com.papb.projectakhirandroid.ui.theme.*
 import com.papb.projectakhirandroid.R
+// ============================= FIX DI SINI =============================
+// Menambahkan import untuk mengatasi "Unresolved reference: Screen"
+import com.papb.projectakhirandroid.navigation.screen.Screen
+// =======================================================================
 
 
 @Composable
@@ -38,6 +41,7 @@ fun ProductCard(
         modifier = modifier
             .width(DIMENS_174dp)
             .clickable {
+                // Baris ini sekarang akan berfungsi dengan benar setelah import ditambahkan
                 navController.navigate(Screen.Details.passProductId(productId = productItem.id))
             }
     ) {
@@ -113,7 +117,7 @@ fun ProductCard(
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun ItemProductPreview() {
     ProductCard(
@@ -126,7 +130,7 @@ fun ItemProductPreview() {
             price = 4.99,
             nutritions = "100gr",
             review = 4.0,
-            category = "Buah & Sayur" // Added the missing parameter
+            category = "Buah & Sayur"
         ),
         navController = rememberNavController(),
         onClickToCart = {}

@@ -1,48 +1,76 @@
 package com.papb.projectakhirandroid.presentation.screen.komunitas
 
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import com.papb.projectakhirandroid.R
-import com.papb.projectakhirandroid.ui.theme.* @Composable
-fun AddPostScreen(navController: NavController = rememberNavController()) {
+import coil.compose.rememberAsyncImagePainter
+import com.papb.projectakhirandroid.domain.model.Post
+import com.papb.projectakhirandroid.ui.theme.*
+import com.papb.projectakhirandroid.utils.Constants
+import com.papb.projectakhirandroid.utils.Utils
+
+@Composable
+fun AddPostScreen(
+    navController: NavController,
+    postType: String,
+    // ✅ PERBAIKAN: Menggunakan Long untuk konsistensi ID
+    postId: Long = 0L,
+    viewModel: KomunitasViewModel = hiltViewModel()
+) {
+    // ⚠️ GANTI DENGAN DATA USER ASLI YANG SUDAH LOGIN
+    val currentUserName = "user_yang_sedang_login"
+
+    // Mencari postingan yang akan diedit dari ViewModel. postId sekarang Long.
+    val existingPost = viewModel.posts.collectAsState().value.find { it.id == postId }
+
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var selectedImageUri by remember { mutableStateOf<String?>(null) }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val context = LocalContext.current
+
+    // Mengisi form jika dalam mode EDIT
+    LaunchedEffect(existingPost) {
+        if (existingPost != null) {
+            title = existingPost.title
+            description = existingPost.description
+            selectedImageUri = existingPost.imageUrl
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        "Buat Postingan Baru",
+                        text = if (postId == 0L) "Tambah Postingan Baru" else "Edit Postingan",
                         fontFamily = GilroyFontFamily,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        color = Black,
+                        fontSize = TEXT_SIZE_20sp
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Kembali")
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Kembali", tint = Black)
                     }
                 },
                 backgroundColor = Color.White,
@@ -54,64 +82,116 @@ fun AddPostScreen(navController: NavController = rememberNavController()) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(DIMENS_16dp),
+                .padding(horizontal = DIMENS_16dp, vertical = DIMENS_16dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(DIMENS_16dp)
         ) {
+
+            // 1. INPUT GAMBAR (Placeholder)
             item {
-                // 1. INPUT JUDUL
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(DIMENS_200dp)
+                        .background(Color.LightGray.copy(alpha = 0.5f), RoundedCornerShape(DIMENS_12dp))
+                        .clickable {
+                            Utils.displayToast(context, "Fitur upload gambar belum diimplementasikan.")
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (selectedImageUri != null) {
+                        Image(
+                            painter = rememberAsyncImagePainter(selectedImageUri),
+                            contentDescription = "Gambar Postingan",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Icon(
+                            Icons.Filled.Image,
+                            contentDescription = "Pilih Gambar",
+                            modifier = Modifier.size(DIMENS_64dp),
+                            tint = Color.Gray
+                        )
+                    }
+                }
+            }
+
+            // 2. JUDUL INPUT FIELD
+            item {
                 OutlinedTextField(
                     value = title,
-                    onValueChange = { title = it },
-                    label = { Text("Judul Postingan (Resep/Tips)") },
+                    onValueChange = {
+                        if (it.length <= Constants.MAX_POST_TITLE_LENGTH) title = it
+                    },
+                    label = {
+                        Text("Judul Postingan (Maks ${Constants.MAX_POST_TITLE_LENGTH} karakter)")
+                    },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(DIMENS_8dp),
                     colors = TextFieldDefaults.outlinedTextFieldColors(
                         focusedBorderColor = Green,
-                        unfocusedBorderColor = Color.Gray
+                        unfocusedBorderColor = Color.Gray,
+                        cursorColor = Green,
+                        focusedLabelColor = Green,
+                        unfocusedLabelColor = Color.Gray,
+                        textColor = Black
                     ),
+                    textStyle = TextStyle(fontSize = TEXT_SIZE_16sp, fontFamily = GilroyFontFamily),
                     singleLine = true
                 )
             }
 
+            // 3. DESKRIPSI INPUT FIELD
             item {
-                // 2. INPUT DESKRIPSI/ISI
                 OutlinedTextField(
                     value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Deskripsi atau Langkah-langkah Lengkap") },
+                    onValueChange = {
+                        if (it.length <= Constants.MAX_POST_DESCRIPTION_LENGTH) description = it
+                    },
+                    label = {
+                        Text("Isi Postingan (Maks ${Constants.MAX_POST_DESCRIPTION_LENGTH} karakter)")
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(DIMENS_160dp),
-                    shape = RoundedCornerShape(DIMENS_8dp),
+                        .height(DIMENS_150dp),
+                    singleLine = false,
                     colors = TextFieldDefaults.outlinedTextFieldColors(
                         focusedBorderColor = Green,
-                        unfocusedBorderColor = Color.Gray
-                    )
+                        unfocusedBorderColor = Color.Gray,
+                        cursorColor = Green,
+                        focusedLabelColor = Green,
+                        unfocusedLabelColor = Color.Gray,
+                        textColor = Black
+                    ),
+                    textStyle = TextStyle(fontSize = TEXT_SIZE_14sp, fontFamily = GilroyFontFamily)
                 )
             }
 
+            // 4. TOMBOL KIRIM
             item {
-                // 3. UPLOAD GAMBAR
-                UploadImageArea(
-                    selectedImageUri = selectedImageUri,
-                    onImagePicked = { uri -> selectedImageUri = uri },
-                    onRemoveImage = { selectedImageUri = null }
-                )
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(DIMENS_8dp))
-            }
-
-            item {
-                // 4. TOMBOL KIRIM
                 Button(
                     onClick = {
-                        if (title.isNotBlank() && description.isNotBlank()) {
-                            println("--- POSTINGAN BARU DIKIRIM ---")
+                        if (title.isNotBlank() && description.isNotBlank() && currentUserName.isNotBlank()) {
+
+                            val postToSubmit = existingPost?.copy(
+                                title = title,
+                                description = description,
+                                imageUrl = selectedImageUri,
+                            ) ?: Post(
+                                // ID bertipe Long
+                                id = postId,
+                                type = postType,
+                                title = title,
+                                description = description,
+                                imageUrl = selectedImageUri,
+                                owner = currentUserName
+                            )
+
+                            viewModel.savePost(postToSubmit)
+                            Utils.displayToast(context, if (postId == 0L) "Postingan Dibuat!" else "Postingan Diperbarui!")
                             navController.popBackStack()
                         } else {
-                            println("Tolong lengkapi Judul dan Deskripsi.")
+                            Utils.displayToast(context, "Tolong lengkapi semua bidang.")
                         }
                     },
                     modifier = Modifier
@@ -120,92 +200,14 @@ fun AddPostScreen(navController: NavController = rememberNavController()) {
                     shape = RoundedCornerShape(DIMENS_8dp),
                     colors = ButtonDefaults.buttonColors(backgroundColor = Green)
                 ) {
-                    Text("Kirim Postingan", color = Color.White, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-    }
-}
-
-// =========================================================================
-//                  KOMPONEN UPLOAD GAMBAR
-// =========================================================================
-
-@Composable
-fun UploadImageArea(
-    selectedImageUri: String?,
-    onImagePicked: (String) -> Unit,
-    onRemoveImage: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(if (selectedImageUri == null) DIMENS_160dp else DIMENS_200dp),
-        shape = RoundedCornerShape(DIMENS_12dp),
-        elevation = DIMENS_2dp
-    ) {
-        if (selectedImageUri == null) {
-            // Tampilan saat belum ada gambar
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .border(
-                        DIMENS_2dp,
-                        Color.LightGray.copy(alpha = 0.7f),
-                        RoundedCornerShape(DIMENS_12dp)
-                    )
-                    .clickable {
-                        // SIMULASI: Anggap gambar terpilih
-                        onImagePicked("content://simulasi/image_12345")
-                    },
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    Icons.Default.CloudUpload,
-                    contentDescription = "Upload Gambar",
-                    modifier = Modifier.size(DIMENS_48dp),
-                    tint = Color.Gray
-                )
-                Spacer(modifier = Modifier.height(DIMENS_8dp))
-                Text(
-                    "Ketuk untuk Upload Gambar Masakan Anda",
-                    color = Color.Gray,
-                    fontFamily = GilroyFontFamily
-                )
-            }
-        } else {
-            // Tampilan saat gambar sudah terpilih
-            Box(modifier = Modifier.fillMaxSize()) {
-                // SIMULASI: Gunakan placeholder image (pastikan Anda punya R.drawable.food_placeholder)
-                Image(
-                    painter = painterResource(id = R.drawable.food_resep),
-                    contentDescription = "Gambar Terpilih",
-                    modifier = Modifier.fillMaxSize()
-                )
-
-                // Tombol Hapus Gambar
-                IconButton(
-                    onClick = onRemoveImage,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(DIMENS_8dp)
-                        .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.5f))
-                ) {
-                    Icon(
-                        Icons.Default.Close,
-                        contentDescription = "Hapus Gambar",
-                        tint = Color.White
+                    Text(
+                        text = if (postId == 0L) "Kirim Postingan" else "Update Postingan",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = TEXT_SIZE_16sp
                     )
                 }
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun AddPostScreenPreview() {
-    AddPostScreen()
 }

@@ -1,163 +1,204 @@
 package com.papb.projectakhirandroid.presentation.screen.komunitas
 
-import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import com.papb.projectakhirandroid.ui.theme.* enum class KomunitasTab {
-    RESEP_MU,
-    TIPS_DAPUR
-}
+import coil.compose.rememberAsyncImagePainter
+import com.papb.projectakhirandroid.R
+import com.papb.projectakhirandroid.domain.model.Post
+import com.papb.projectakhirandroid.ui.theme.* // Asumsi ini berisi DIMENS, TEXT_SIZE, dan Colors
+import com.papb.projectakhirandroid.utils.Utils
 
-// =========================================================================
-//                  KOMUNITAS SCREEN UTAMA
-// =========================================================================
+// Definisi Tab
+private val tabTitles = listOf("Resep", "Tips Dapur")
 
 @Composable
 fun KomunitasScreen(
-    navController: NavController = rememberNavController()
-    // Hapus parameter ViewModel
+    navController: NavController,
+    viewModel: KomunitasViewModel = hiltViewModel()
 ) {
-    var selectedTab by remember { mutableStateOf(KomunitasTab.RESEP_MU) }
+    // Mengambil daftar postingan dari ViewModel
+    val posts by viewModel.posts.collectAsState()
+    val context = LocalContext.current
 
-    // NAMA PENGGUNA STATIS (Placeholder)
-    val currentUserName = "Nama Profil Anda"
+    // State untuk mengelola Tab yang sedang dipilih
+    var selectedTabIndex by remember { mutableStateOf(0) } // 0 = Resep, 1 = Tips Dapur
+
+    // Filter posts berdasarkan tab yang dipilih
+    val currentPostType = if (selectedTabIndex == 0) "resep" else "tips"
+    val filteredPosts = posts.filter { it.type == currentPostType }
 
     Scaffold(
-        backgroundColor = Color.White,
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        "Komunitas FreshMart",
+                        fontFamily = GilroyFontFamily,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Black
+                    )
+                },
+                backgroundColor = Color.White,
+                elevation = DIMENS_4dp
+            )
+        },
+        // Floating Action Button untuk Tambah Postingan
         floatingActionButton = {
             FloatingActionButton(
-                // NAVIGASI KE LAYAR POSTINGAN BARU
-                onClick = { navController.navigate("add_post_screen") },
+                onClick = {
+                    // Navigasi ke AddPostScreen dengan tipe yang sesuai (postId=0L untuk ADD)
+                    val postTypeNav = if (selectedTabIndex == 0) "resep" else "tips"
+                    navController.navigate("add_post/$postTypeNav?postId=0")
+                },
                 backgroundColor = Green,
-                contentColor = Color.White,
-                modifier = Modifier.padding(bottom = DIMENS_16dp, end = DIMENS_16dp)
+                contentColor = Color.White
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Tambah Postingan")
+                Icon(Icons.Filled.Add, contentDescription = "Tambah Postingan")
             }
-        },
-        floatingActionButtonPosition = FabPosition.End
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            // Bagian Tab
+            ScrollableTabRow(
+                selectedTabIndex = selectedTabIndex,
+                backgroundColor = Color.White,
+                edgePadding = DIMENS_16dp,
+                indicator = { tabPositions ->
+                    TabRowDefaults.Indicator(
+                        Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
+                        color = Green,
+                        height = DIMENS_2dp
+                    )
+                }
+            ) {
+                tabTitles.forEachIndexed { index, title ->
+                    Tab(
+                        selected = selectedTabIndex == index,
+                        onClick = { selectedTabIndex = index },
+                        text = {
+                            Text(
+                                title,
+                                fontFamily = GilroyFontFamily,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (selectedTabIndex == index) Green else GraySecondTextColor
+                            )
+                        }
+                    )
+                }
+            }
 
-            HeaderKomunitas(
-                title = "FreshMart Komunitas",
-                description = "Tempat inspirasi resep harian, tips dapur, dan berbagi kreasi masakan Anda."
-            )
+            // Konten Tab (Daftar Postingan)
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = DIMENS_16dp)
+                    .padding(top = DIMENS_16dp),
+                verticalArrangement = Arrangement.spacedBy(DIMENS_16dp)
+            ) {
 
-            TabRowKomunitas(
-                selectedTab = selectedTab,
-                onTabSelected = { selectedTab = it }
-            )
+                items(filteredPosts) { post ->
+                    PostItem(
+                        post = post,
+                        onEdit = { postToEdit ->
+                            // Mengirim ID bertipe Long
+                            navController.navigate("add_post/${postToEdit.type}?postId=${postToEdit.id}")
+                        },
+                        onDelete = { postToDelete ->
+                            viewModel.deletePost(postToDelete)
+                            Utils.displayToast(context, "Postingan '${postToDelete.title}' dihapus!")
+                        }
+                    )
+                }
 
-            Crossfade(targetState = selectedTab, label = "KomunitasTabContent") { tab ->
-                when (tab) {
-                    KomunitasTab.RESEP_MU -> ResepMuContent(currentUserName = currentUserName, navController = navController)
-                    KomunitasTab.TIPS_DAPUR -> TipsDapurContent(currentUserName = currentUserName, navController = navController)
+                // ✅ PERBAIKAN: Membungkus Spacer dalam 'item {}' untuk LazyColumn
+                item {
+                    Spacer(modifier = Modifier.height(DIMENS_64dp))
                 }
             }
         }
     }
 }
 
-// ---------------------- Komponen Header Utama ----------------------
 @Composable
-fun HeaderKomunitas(title: String, description: String) {
-    Column(modifier = Modifier.padding(DIMENS_16dp)) {
-        Text(
-            text = title,
-            fontFamily = GilroyFontFamily,
-            fontWeight = FontWeight.Bold,
-            fontSize = TEXT_SIZE_24sp,
-            color = Black,
-            modifier = Modifier.padding(bottom = DIMENS_4dp)
-        )
-        Text(
-            text = description,
-            fontFamily = GilroyFontFamily,
-            fontWeight = FontWeight.Normal,
-            fontSize = TEXT_SIZE_14sp,
-            color = Color.Gray
-        )
-    }
-    Divider(color = Color.LightGray.copy(alpha = 0.5f), thickness = DIMENS_1dp)
-}
-
-// ---------------------- Komponen Tab Row ----------------------
-@Composable
-fun TabRowKomunitas(
-    selectedTab: KomunitasTab,
-    onTabSelected: (KomunitasTab) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(DIMENS_16dp)
-            .clip(RoundedCornerShape(DIMENS_12dp))
-            .background(GrayBackground),
-        horizontalArrangement = Arrangement.SpaceAround,
-        verticalAlignment = Alignment.CenterVertically
+fun PostItem(post: Post, onEdit: (Post) -> Unit, onDelete: (Post) -> Unit) {
+    Card(
+        shape = RoundedCornerShape(DIMENS_12dp),
+        elevation = DIMENS_4dp,
+        modifier = Modifier.fillMaxWidth()
     ) {
-        TabItem(
-            text = "Resep Mu",
-            isSelected = selectedTab == KomunitasTab.RESEP_MU,
-            onClick = { onTabSelected(KomunitasTab.RESEP_MU) },
-            modifier = Modifier.weight(1f)
-        )
-        TabItem(
-            text = "Tips Dapur",
-            isSelected = selectedTab == KomunitasTab.TIPS_DAPUR,
-            onClick = { onTabSelected(KomunitasTab.TIPS_DAPUR) },
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
+        Column(modifier = Modifier.padding(DIMENS_16dp)) {
+            // Header Postingan (Owner, Tipe, Aksi Edit/Delete)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.profile_picture_placeholder),
+                    contentDescription = "Profile Picture",
+                    modifier = Modifier
+                        .size(DIMENS_40dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+                Spacer(modifier = Modifier.width(DIMENS_8dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = post.owner, fontWeight = FontWeight.Bold, fontSize = TEXT_SIZE_14sp, color = Color.Black)
+                    Text(text = if (post.type == "resep") "Resep" else "Tips Diet", fontWeight = FontWeight.Medium, fontSize = TEXT_SIZE_12sp, color = GraySecondTextColor)
+                }
 
-// ---------------------- Komponen Item Tab ----------------------
-@Composable
-fun TabItem(
-    text: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(DIMENS_12dp))
-            .background(if (isSelected) Green else Color.Transparent)
-            .clickable(onClick = onClick)
-            .padding(vertical = DIMENS_8dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            fontFamily = GilroyFontFamily,
-            fontWeight = FontWeight.SemiBold,
-            color = if (isSelected) Color.White else Black,
-            fontSize = TEXT_SIZE_16sp
-        )
-    }
-}
+                // Aksi Edit dan Delete
+                IconButton(onClick = { onEdit(post) }) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit Post", tint = Green)
+                }
+                IconButton(onClick = { onDelete(post) }) {
+                    Icon(painterResource(id = R.drawable.ic_delete), contentDescription = "Delete Post", tint = Color.Red)
+                }
+            }
 
-@Preview(showBackground = true)
-@Composable
-fun KomunitasScreenPreview() {
-    KomunitasScreen()
+            // Gambar Postingan (Jika ada)
+            post.imageUrl?.let { uri ->
+                Spacer(modifier = Modifier.height(DIMENS_12dp))
+                Image(
+                    painter = rememberAsyncImagePainter(uri),
+                    contentDescription = "Gambar Postingan",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(DIMENS_200dp)
+                        .clip(RoundedCornerShape(DIMENS_8dp)),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            Spacer(modifier = Modifier.height(DIMENS_12dp))
+
+            // Judul dan Deskripsi
+            Text(text = post.title, fontWeight = FontWeight.Bold, fontSize = TEXT_SIZE_16sp, color = Color.Black)
+            Spacer(modifier = Modifier.height(DIMENS_4dp))
+            Text(text = post.description, fontWeight = FontWeight.Normal, fontSize = TEXT_SIZE_14sp, color = GraySecondTextColor)
+        }
+    }
 }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
+import com.papb.projectakhirandroid.navigation.screen.Screen
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,7 +17,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.papb.projectakhirandroid.R
-import com.papb.projectakhirandroid.navigation.screen.Screen
 import com.papb.projectakhirandroid.presentation.common.card.CategoryCard
 import com.papb.projectakhirandroid.presentation.component.SearchViewBar
 import com.papb.projectakhirandroid.ui.theme.*

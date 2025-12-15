@@ -1,8 +1,6 @@
 package com.papb.projectakhirandroid.presentation.screen.komunitas
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -11,6 +9,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
+import androidx.compose.foundation.background
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,122 +18,170 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
-import com.papb.projectakhirandroid.R
-import com.papb.projectakhirandroid.ui.theme.* // =========================================================================
-//                  HELPER FUNCTIONS (NAVIGASI & AKSI)
-// =========================================================================
-
-fun navigateToDetail(navController: NavController, postId: String) {
-    // TODO: GANTI INI DENGAN LOGIKA NAVIGASI COMPOSE REAL
-    println(">>> NAVIGASI: Ke Detail Post $postId")
-}
-
-fun deletePost(postId: String) {
-    // TODO: GANTI INI DENGAN LOGIKA PENGHAPUSAN DI VIEWMODEL/DATABASE
-    println(">>> AKSI: Menghapus Postingan $postId")
-}
-
-// =========================================================================
-//                  KOMPONEN ITEM POSTINGAN
-// =========================================================================
+import com.papb.projectakhirandroid.ui.theme.DIMENS_250dp
+import coil.compose.rememberAsyncImagePainter
+import com.papb.projectakhirandroid.R // Import resource
+import com.papb.projectakhirandroid.domain.model.Post
+import com.papb.projectakhirandroid.ui.theme.* // Import theme/dimens
 
 @Composable
 fun PostinganItem(
-    username: String,
-    profileResId: Int,
-    imageResId: Int,
-    caption: String,
-    isOwner: Boolean,
-    postId: String,
+    post: Post, // Menerima objek Post utuh
+    currentUserName: String, // Username pengguna yang sedang login (untuk pengecekan isOwner)
     navController: NavController
 ) {
+    // Memeriksa apakah postingan ini milik pengguna yang sedang login
+    val isOwner = post.owner == currentUserName
+
+    // State untuk Dropdown Menu (Menu Opsi Lainnya)
     var showMenu by remember { mutableStateOf(false) }
 
-    Column(
+    // Asumsi: Resource ID untuk profile picture user default
+    val profileImageResId = R.drawable.profileimage
+
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = { navigateToDetail(navController, postId) }) // Klik untuk Detail
-            .clip(RoundedCornerShape(DIMENS_12dp))
-            .background(Color.White)
-            .border(DIMENS_1dp, Color.LightGray.copy(alpha = 0.5f), RoundedCornerShape(DIMENS_12dp))
+            .clickable {
+                // TODO: Navigasi ke Detail Postingan
+                println("Menuju detail postingan: ${post.id}")
+            },
+        shape = RoundedCornerShape(DIMENS_12dp),
+        elevation = DIMENS_4dp,
+        backgroundColor = MaterialTheme.colors.surface
     ) {
-        // Area Gambar Postingan
-        Image(
-            painter = painterResource(id = imageResId),
-            contentDescription = "Postingan gambar",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(DIMENS_248dp)
-        )
+        Column(modifier = Modifier.fillMaxWidth()) {
 
-        // Area Profil, Caption, dan Opsi Hapus
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(DIMENS_12dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-
-            // Gambar Profil + Nama Pengguna + Caption
+            // =========================================================
+            //               HEADER POST (Profil & Opsi)
+            // =========================================================
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = DIMENS_16dp, vertical = DIMENS_12dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 // Gambar Profil
                 Image(
-                    painter = painterResource(id = profileResId),
-                    contentDescription = "Foto Profil",
-                    contentScale = ContentScale.Crop,
+                    painter = painterResource(id = profileImageResId),
+                    contentDescription = "Foto Profil ${post.owner}",
                     modifier = Modifier
                         .size(DIMENS_40dp)
-                        .clip(CircleShape)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
                 )
 
                 Spacer(modifier = Modifier.width(DIMENS_8dp))
 
-                // Nama Pengguna dan Caption
-                Column {
+                // Nama Pengguna & Tipe Post
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = username,
+                        text = post.owner ?: "Anonim", // Tampilkan nama pemilik
                         fontFamily = GilroyFontFamily,
                         fontWeight = FontWeight.Bold,
                         fontSize = TEXT_SIZE_16sp,
                         color = Black
                     )
-                    Spacer(modifier = Modifier.height(DIMENS_2dp))
                     Text(
-                        text = caption,
-                        fontFamily = GilroyFontFamily,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = TEXT_SIZE_14sp,
-                        color = Color.DarkGray
+                        text = post.type.uppercase(), // Tampilkan tipe post (RESEP/TIPS)
+                        fontSize = TEXT_SIZE_12sp,
+                        color = Green,
+                        fontWeight = FontWeight.SemiBold
                     )
+                }
+
+                // Tombol Opsi (Hanya tampil jika pemilik)
+                if (isOwner) {
+                    Box {
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(Icons.Filled.MoreVert, contentDescription = "Opsi Postingan")
+                        }
+
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(onClick = {
+                                // TODO: Logika Edit Post
+                                showMenu = false
+                                println("Edit Post: ${post.id}")
+                            }) {
+                                Text("Edit")
+                            }
+                            Divider()
+                            DropdownMenuItem(onClick = {
+                                // TODO: Logika Hapus Post
+                                showMenu = false
+                                println("Hapus Post: ${post.id}")
+                            }) {
+                                Text("Hapus", color = Color.Red)
+                            }
+                        }
+                    }
+                }
+            } // End Row Header
+
+
+            // =========================================================
+            //                      GAMBAR POST
+            // =========================================================
+            // Tampilkan gambar hanya jika imageUrl tidak null
+            if (post.imageUrl != null) {
+                Image(
+                    painter = rememberAsyncImagePainter(model = post.imageUrl),
+                    contentDescription = post.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(DIMENS_250dp)
+                )
+            } else {
+                // Tampilkan placeholder jika tidak ada gambar
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(DIMENS_200dp)
+                        .background(Color.LightGray.copy(alpha = 0.3f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Tidak Ada Gambar", color = Color.Gray)
                 }
             }
 
-            // OPSI HAPUS (Hanya muncul jika isOwner = true)
-            if (isOwner) {
-                IconButton(onClick = { showMenu = true }) {
-                    Icon(
-                        Icons.Default.MoreVert,
-                        contentDescription = "Opsi",
-                        tint = Color.Gray
-                    )
-                }
 
-                DropdownMenu(
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false }
-                ) {
-                    DropdownMenuItem(onClick = {
-                        deletePost(postId) // Panggil fungsi delete
-                        showMenu = false
-                    }) {
-                        Text("Hapus Postingan", color = Color.Red)
-                    }
-                }
+            // =========================================================
+            //                    KETERANGAN POST
+            // =========================================================
+            Column(modifier = Modifier.padding(DIMENS_16dp)) {
+                // Judul
+                Text(
+                    text = post.title,
+                    fontFamily = GilroyFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = TEXT_SIZE_18sp,
+                    color = Black
+                )
+                Spacer(modifier = Modifier.height(DIMENS_4dp))
+
+                // Deskripsi Singkat
+                Text(
+                    text = post.description.take(100) + if (post.description.length > 100) "..." else "",
+                    fontSize = TEXT_SIZE_14sp,
+                    color = Color.DarkGray
+                )
+                // Tombol Baca Selengkapnya
+                Text(
+                    text = "Baca Selengkapnya",
+                    fontSize = TEXT_SIZE_14sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Green,
+                    modifier = Modifier
+                        .padding(top = DIMENS_4dp)
+                        .clickable {
+                            // TODO: Navigasi ke Detail Postingan
+                            println("Membaca selengkapnya...")
+                        }
+                )
             }
         }
     }

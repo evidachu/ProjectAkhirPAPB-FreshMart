@@ -1,25 +1,33 @@
+// FILE: build.gradle (Level Proyek)
+
 buildscript {
     ext {
-        // PERBAIKAN: Menggunakan versi modern yang kompatibel
-        compose_ui_version = '1.5.4'     // Kompatibel dengan Kotlin 1.9.20
-        room_version = '2.6.1'          // Versi Room terbaru
-        accompanist_version = '0.32.0'  // Versi Accompanist terbaru
-        dagger_hilt = "2.48"            // Versi Hilt terbaru
+        // Versi yang disarankan dan kompatibel untuk mengatasi IllegalAccessError
+        compose_ui_version = '1.5.4'
+        room_version = '2.6.1'
+        accompanist_version = '0.32.0'
 
-        // Versi Kotlin yang akan kita gunakan untuk plugin
+        // Menggunakan versi Hilt yang stabil
+        dagger_hilt = "2.48"
+
+        // Versi Kotlin yang harus digunakan
         kotlin_version = '1.9.20'
     }
 
     dependencies {
-        // PERBAIKAN: Menggunakan versi Hilt yang kompatibel dengan dagger_hilt di ext
+        // Plugin Hilt
         classpath "com.google.dagger:hilt-android-gradle-plugin:$dagger_hilt"
     }
 
 }
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
-    // PERBAIKAN: Menggunakan versi yang lebih baru dan seragam
-    id 'com.android.application' version '8.2.2' apply false // Versi AGP terbaru
-    id 'com.android.library' version '8.2.2' apply false       // Versi AGP terbaru
-    id 'org.jetbrains.kotlin.android' version "$kotlin_version" apply false // Menggunakan 1.9.20
+    // Versi AGP terbaru yang kompatibel dengan Kotlin 1.9.20 (8.2.2 atau lebih baru)
+    id 'com.android.application' version '8.2.2' apply false
+    id 'com.android.library' version '8.2.2' apply false
+
+    // Plugin Kotlin
+    id 'org.jetbrains.kotlin.android' version "$kotlin_version" apply false
 }
+
+// Tambahkan konfigurasi di sini jika diperlukan oleh plugin lain

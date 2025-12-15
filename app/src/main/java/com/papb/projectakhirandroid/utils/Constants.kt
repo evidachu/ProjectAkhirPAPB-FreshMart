@@ -10,4 +10,7 @@ object Constants {
 
     const val PRODUCT_ARGUMENT_KEY = "productId"
 
+    // ✅ PERBAIKAN: TAMBAHKAN KONSTANTA BATAS KARAKTER INI
+    const val MAX_POST_TITLE_LENGTH = 50
+    const val MAX_POST_DESCRIPTION_LENGTH = 500
 }
