@@ -16,7 +16,8 @@ import com.papb.projectakhirandroid.ui.theme.DIMENS_32dp
 
 @Composable
 fun MainScreen(
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    onLogout: () -> Unit // 1. Menerima callback
 ) {
     Scaffold(
         bottomBar = {
@@ -31,8 +32,11 @@ fun MainScreen(
         Column(
             modifier = Modifier.padding(it)
         ) {
-            MainNavGraph(navController = navController)
+            // 2. Meneruskan callback ke MainNavGraph
+            MainNavGraph(
+                navController = navController,
+                onLogout = onLogout
+            )
         }
     }
-
 }

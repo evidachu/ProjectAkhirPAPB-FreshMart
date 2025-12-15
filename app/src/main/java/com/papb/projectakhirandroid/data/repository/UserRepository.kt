@@ -46,4 +46,10 @@ class UserRepository @Inject constructor(@ApplicationContext private val context
             }
         }
     }
+
+    suspend fun logout() {
+        context.dataStore.edit {
+            it.clear()
+        }
+    }
 }

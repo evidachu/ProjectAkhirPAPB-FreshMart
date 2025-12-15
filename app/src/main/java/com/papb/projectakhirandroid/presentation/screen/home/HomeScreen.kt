@@ -15,7 +15,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.ExperimentalPagerApi // Import OptIn
 import com.papb.projectakhirandroid.R
 import com.papb.projectakhirandroid.domain.model.ProductItem
 import com.papb.projectakhirandroid.navigation.screen.Screen
@@ -26,7 +26,7 @@ import com.papb.projectakhirandroid.ui.theme.DIMENS_24dp
 import com.papb.projectakhirandroid.utils.DataDummy
 import com.papb.projectakhirandroid.utils.showToastShort
 
-@ExperimentalPagerApi
+@OptIn(ExperimentalPagerApi::class) // Ganti dengan OptIn
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
@@ -51,7 +51,7 @@ fun HomeScreen(
     )
 }
 
-@ExperimentalPagerApi
+@OptIn(ExperimentalPagerApi::class) // Ganti dengan OptIn
 @Composable
 fun HomeContent(
     modifier: Modifier = Modifier,
@@ -120,7 +120,7 @@ fun clickToCart(context: Context, productItem: ProductItem, viewModel: HomeViewM
 
 // Preview HeaderLocationHome dihapus
 
-@ExperimentalPagerApi
+@OptIn(ExperimentalPagerApi::class) // Ganti dengan OptIn
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {

@@ -35,7 +35,7 @@ class CartViewModel @Inject constructor(
 
     fun deleteCart(productItem: ProductItem) {
         viewModelScope.launch(Dispatchers.IO) {
-            useCases.deleteCart.invoke(productItem)
+            useCases.deleteCartUseCase.invoke(productItem)
         }
     }
 

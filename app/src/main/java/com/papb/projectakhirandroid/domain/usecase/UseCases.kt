@@ -18,6 +18,6 @@ data class UseCases(
     val getAllProductUseCase: GetAllProductUseCase,
     val getAllCartUseCase: GetAllCartUseCase,
     val addCartUseCase: AddCartUseCase,
-    val deleteCart: DeleteCartUseCase,
+    val deleteCartUseCase: DeleteCartUseCase,
     val searchProductUseCase: SearchProductUseCase
 )

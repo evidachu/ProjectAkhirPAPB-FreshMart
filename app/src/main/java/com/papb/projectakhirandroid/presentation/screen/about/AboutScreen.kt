@@ -22,7 +22,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.papb.projectakhirandroid.R
+import com.papb.projectakhirandroid.navigation.graph.Graph
 import com.papb.projectakhirandroid.navigation.screen.Screen
+import com.papb.projectakhirandroid.presentation.auth.AuthViewModel
 import com.papb.projectakhirandroid.presentation.common.card.ProfileCard
 import com.papb.projectakhirandroid.presentation.common.content.ListContentAbout
 import com.papb.projectakhirandroid.ui.theme.*
@@ -30,9 +32,12 @@ import com.papb.projectakhirandroid.ui.theme.*
 @Composable
 fun AboutScreen(
     modifier: Modifier = Modifier,
-    navController: NavController,
-    profileViewModel: ProfileViewModel = hiltViewModel()
-) {
+    navController: NavController, // Masih dibutuhkan untuk Edit Profile
+    profileViewModel: ProfileViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel(),
+    onLogout: () -> Unit = { authViewModel.logout() }
+)
+ {
     val activity = LocalContext.current as Activity
     val name by profileViewModel.name.collectAsState()
     val email by profileViewModel.email.collectAsState()
@@ -72,7 +77,9 @@ fun AboutScreen(
 
         Spacer(modifier = Modifier.height(DIMENS_32dp))
 
-        ButtonLogout { activity.finish() }
+        ButtonLogout {
+            onLogout()
+        }
     }
 }
 

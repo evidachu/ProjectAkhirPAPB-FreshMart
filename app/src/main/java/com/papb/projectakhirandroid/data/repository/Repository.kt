@@ -5,7 +5,9 @@ import com.papb.projectakhirandroid.domain.repository.LocalDataSource
 import com.papb.projectakhirandroid.domain.repository.OnBoardingOperation
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class Repository @Inject constructor(
     private val dataStore: OnBoardingOperation,
     private val localDataSource: LocalDataSource

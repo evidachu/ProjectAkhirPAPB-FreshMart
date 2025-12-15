@@ -1,4 +1,3 @@
-
 package com.papb.projectakhirandroid.presentation.screen.register
 
 import androidx.compose.foundation.background
@@ -17,21 +16,49 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.papb.projectakhirandroid.navigation.screen.Screen
+import com.papb.projectakhirandroid.presentation.auth.AuthViewModel
 import com.papb.projectakhirandroid.ui.theme.Green
 
 @Composable
-fun RegisterScreen(navController: NavController) {
-    var name by remember { mutableStateOf("") }
+fun RegisterScreen(
+    navController: NavController,
+    viewModel: AuthViewModel = hiltViewModel()
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    Scaffold {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val scaffoldState = rememberScaffoldState()
+
+    // --- Side Effects ---
+    LaunchedEffect(uiState.isLoggedIn) {
+        if (uiState.isLoggedIn) {
+            // Setelah register sukses, navigasi ke main screen dan bersihkan backstack
+            navController.navigate(Screen.Main.route) {
+                popUpTo(Screen.Register.route) { inclusive = true }
+                popUpTo(Screen.Login.route) { inclusive = true } // Hapus juga Login dari backstack
+                launchSingleTop = true
+            }
+        }
+    }
+
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let {
+            scaffoldState.snackbarHostState.showSnackbar(it)
+            viewModel.errorShown() // Reset error state
+        }
+    }
+
+    Scaffold(scaffoldState = scaffoldState) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Green)
+                .padding(paddingValues)
                 .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -63,21 +90,13 @@ fun RegisterScreen(navController: NavController) {
                 verticalArrangement = Arrangement.Center
             ) {
                 OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Nama Lengkap") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    colors = textFieldColors()
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
                     label = { Text("Alamat Email") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    colors = textFieldColors()
+                    colors = textFieldColors(),
+                    enabled = !uiState.isLoading
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
@@ -87,25 +106,29 @@ fun RegisterScreen(navController: NavController) {
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    colors = textFieldColors()
+                    colors = textFieldColors(),
+                    enabled = !uiState.isLoading
                 )
                 Spacer(modifier = Modifier.height(32.dp))
-                Button(
-                    onClick = {
-                        navController.navigate(Screen.Login.route) {
-                            popUpTo(Screen.Register.route) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        backgroundColor = Color.White
-                    )
-                ) {
-                    Text("Daftar", fontSize = 18.sp, color = Green, fontWeight = FontWeight.Bold)
+
+                Box(contentAlignment = Alignment.Center) {
+                    Button(
+                        onClick = { viewModel.register(email, password) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(backgroundColor = Color.White),
+                        enabled = !uiState.isLoading
+                    ) {
+                        Text("Daftar", fontSize = 18.sp, color = Green, fontWeight = FontWeight.Bold)
+                    }
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(
+                            color = Green,
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
                 }
             }
 
@@ -145,9 +168,7 @@ fun LoginText(navController: NavController) {
         text = annotatedText,
         onClick = { offset ->
             annotatedText.getStringAnnotations(tag = "LOGIN", start = offset, end = offset)
-                .firstOrNull()?.let {
-                    navController.popBackStack()
-                }
+                .firstOrNull()?.let { navController.popBackStack() }
         },
         style = LocalTextStyle.current.copy(color = Color.White.copy(alpha = 0.8f))
     )
