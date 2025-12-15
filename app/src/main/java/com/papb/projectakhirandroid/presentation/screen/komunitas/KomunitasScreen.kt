@@ -68,7 +68,7 @@ fun KomunitasScreen(
                 onClick = {
                     // Navigasi ke AddPostScreen dengan tipe yang sesuai (postId=0L untuk ADD)
                     val postTypeNav = if (selectedTabIndex == 0) "resep" else "tips"
-                    navController.navigate("add_post/$postTypeNav?postId=0")
+                    navController.navigate("add_post_screen/$postTypeNav?postId=0")
                 },
                 backgroundColor = Green,
                 contentColor = Color.White
@@ -125,7 +125,7 @@ fun KomunitasScreen(
                         post = post,
                         onEdit = { postToEdit ->
                             // Mengirim ID bertipe Long
-                            navController.navigate("add_post/${postToEdit.type}?postId=${postToEdit.id}")
+                            navController.navigate("add_post_screen/${postToEdit.type}?postId=${postToEdit.id}")
                         },
                         onDelete = { postToDelete ->
                             viewModel.deletePost(postToDelete)

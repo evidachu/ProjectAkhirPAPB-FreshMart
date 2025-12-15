@@ -26,8 +26,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.papb.projectakhirandroid.R
-import com.papb.projectakhirandroid.ui.theme.GilroyFontFamily
-import com.papb.projectakhirandroid.ui.theme.Green
+import com.papb.projectakhirandroid.ui.theme.*
 
 @Composable
 fun CollectionScreen(
@@ -45,15 +44,13 @@ fun CollectionScreen(
             TopAppBar(
                 title = { Text("Koleksi Saya") },
                 navigationIcon = {
-                    IconButton(onClick = { 
-                        // Simply pop the back stack to return to the previous screen (Profile)
-                        navController.popBackStack()
-                    }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = Color.Black)
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Kembali", tint = Black)
                     }
                 },
-                backgroundColor = Green,
-                contentColor = Color.Black
+                backgroundColor = Color.White,
+                elevation = DIMENS_4dp,
+                contentColor = Black
             )
         },
         floatingActionButton = {
