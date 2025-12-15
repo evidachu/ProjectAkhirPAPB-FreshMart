@@ -68,7 +68,7 @@ fun KomunitasScreen(
                 onClick = {
                     // Navigasi ke AddPostScreen dengan tipe yang sesuai (postId=0L untuk ADD)
                     val postTypeNav = if (selectedTabIndex == 0) "resep" else "tips"
-                    navController.navigate("add_post_screen/$postTypeNav?postId=0")
+                    navController.navigate("add_post/$postTypeNav?postId=0")
                 },
                 backgroundColor = Green,
                 contentColor = Color.White
@@ -167,7 +167,9 @@ fun PostItem(post: Post, onEdit: (Post) -> Unit, onDelete: (Post) -> Unit) {
                 Spacer(modifier = Modifier.width(DIMENS_8dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = post.owner, fontWeight = FontWeight.Bold, fontSize = TEXT_SIZE_14sp, color = Color.Black)
-                    Text(text = if (post.type == "resep") "Resep" else "Tips Diet", fontWeight = FontWeight.Medium, fontSize = TEXT_SIZE_12sp, color = GraySecondTextColor)
+                    // Mengubah 'Tips Diet' menjadi 'Tips Dapur' agar konsisten dengan Tab
+                    val typeText = if (post.type == "resep") "Resep" else "Tips Dapur"
+                    Text(text = typeText, fontWeight = FontWeight.Medium, fontSize = TEXT_SIZE_12sp, color = GraySecondTextColor)
                 }
 
                 // Aksi Edit dan Delete

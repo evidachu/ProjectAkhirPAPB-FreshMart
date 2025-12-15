@@ -1,36 +1,40 @@
+// File: app/src/main/java/com/papb/projectakhirandroid/navigation/graph/MainNavGraph.kt
+
 package com.papb.projectakhirandroid.navigation.graph
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavGraphBuilder
-import androidx.navigation.NavHostController
-import androidx.navigation.NavType
+import androidx.navigation.*
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
-import androidx.navigation.navigation
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.papb.projectakhirandroid.navigation.screen.BottomNavItemScreen
 import com.papb.projectakhirandroid.navigation.screen.Screen
 import com.papb.projectakhirandroid.presentation.screen.about.AboutScreen
 import com.papb.projectakhirandroid.presentation.screen.cart.CartScreen
 import com.papb.projectakhirandroid.presentation.screen.checkout.CheckoutScreen
-import com.papb.projectakhirandroid.presentation.screen.collection.AddCollectionScreen
-import com.papb.projectakhirandroid.presentation.screen.collection.CollectionScreen
 import com.papb.projectakhirandroid.presentation.screen.detail.DetailScreen
 import com.papb.projectakhirandroid.presentation.screen.editprofile.EditProfileScreen
 import com.papb.projectakhirandroid.presentation.screen.explore.ExploreScreen
-import com.papb.projectakhirandroid.presentation.screen.home.HomeScreen
 import com.papb.projectakhirandroid.presentation.screen.home.HomeViewModel
+import com.papb.projectakhirandroid.presentation.screen.home.HomeScreen
 import com.papb.projectakhirandroid.presentation.screen.home.clickToCart
 import com.papb.projectakhirandroid.presentation.screen.invoice.InvoiceScreen
 import com.papb.projectakhirandroid.presentation.screen.komunitas.AddPostScreen
 import com.papb.projectakhirandroid.presentation.screen.komunitas.KomunitasScreen
 import com.papb.projectakhirandroid.presentation.screen.productlist.ProductListScreen
 import com.papb.projectakhirandroid.presentation.screen.search.SearchScreen
-import com.papb.projectakhirandroid.utils.Constants
+import com.papb.projectakhirandroid.utils.Constants.PRODUCT_ARGUMENT_KEY
+
+// 🚨 IMPORT TAMBAHAN UNTUK SHARED VIEWMODEL
+import com.papb.projectakhirandroid.presentation.screen.komunitas.KomunitasViewModel
+import androidx.compose.runtime.remember
+import androidx.navigation.NavBackStackEntry
+
+// ✅ PERBAIKAN: Import Graph agar MAIN dan DETAILS dikenali
+import com.papb.projectakhirandroid.navigation.graph.Graph
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
@@ -56,11 +60,20 @@ fun MainNavGraph(
         composable(BottomNavItemScreen.Cart.route) {
             CartScreen(navController = navController)
         }
-        composable(BottomNavItemScreen.Komunitas.route) {
-            KomunitasScreen(navController = navController)
+
+        // --- Komunitas Screen (Induk - Inisialisasi Shared ViewModel) ---
+        composable(route = BottomNavItemScreen.Komunitas.route) { backStackEntry ->
+            // ✅ FIX 1: Inisialisasi ViewModel terikat ke NavBackStackEntry ini
+            val komunitasViewModel: KomunitasViewModel = hiltViewModel(backStackEntry)
+
+            KomunitasScreen(
+                navController = navController,
+                viewModel = komunitasViewModel // ⬅️ Teruskan instance
+            )
         }
-        composable(BottomNavItemScreen.About.route) {
-            AboutScreen(navController = navController, onLogout = onLogout)
+
+        composable(route = BottomNavItemScreen.About.route) {
+            AboutScreen(navController = navController)
         }
 
         // ==== Edit Profile ====
@@ -68,20 +81,38 @@ fun MainNavGraph(
             EditProfileScreen(navController = navController)
         }
 
-        // ==== Add / Edit Post ====
+        // --- ADD/EDIT POST SCREEN (Anak - Mengambil Shared ViewModel) ---
         composable(
-            route = "add_post_screen/{postType}?postId={postId}",
+            route = "${Screen.AddPost.route}?postType={postType}&postId={postId}",
             arguments = listOf(
-                navArgument("postType") { type = NavType.StringType },
-                navArgument("postId") { type = NavType.LongType; defaultValue = 0L }
+                navArgument("postType") {
+                    type = NavType.StringType
+                    defaultValue = "resep"
+                    nullable = true
+                },
+                navArgument("postId") {
+                    type = NavType.LongType
+                    defaultValue = 0L
+                }
             )
         ) { backStackEntry ->
             val postType = backStackEntry.arguments?.getString("postType") ?: "resep"
             val postId = backStackEntry.arguments?.getLong("postId") ?: 0L
+
+            // ✅ FIX 2: Ambil instance ViewModel yang SAMA dari rute Komunitas
+            val parentEntry: NavBackStackEntry = remember(backStackEntry) {
+                // Mendapatkan NavBackStackEntry dari KomunitasScreen
+                navController.getBackStackEntry(BottomNavItemScreen.Komunitas.route)
+            }
+
+            // Menggunakan hiltViewModel dengan parentEntry memastikan instance yang dishare
+            val sharedViewModel: KomunitasViewModel = hiltViewModel(parentEntry)
+
             AddPostScreen(
                 navController = navController,
                 postType = postType,
-                postId = postId
+                postId = postId,
+                viewModel = sharedViewModel // ⬅️ Teruskan instance yang dishare
             )
         }
 

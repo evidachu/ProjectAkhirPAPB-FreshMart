@@ -36,6 +36,7 @@ sealed class Screen(val route: String) {
 
     // Checkout & Invoice
     object Checkout : Screen("checkout_screen")
+
     object Invoice : Screen("invoice_screen")
 
     // Collection

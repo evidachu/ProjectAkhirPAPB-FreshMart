@@ -1,6 +1,8 @@
 package com.papb.projectakhirandroid.presentation.screen.komunitas
 
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult // ✅ Tambah Import
+import androidx.activity.result.contract.ActivityResultContracts // ✅ Tambah Import
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,28 +33,35 @@ import com.papb.projectakhirandroid.utils.Utils
 fun AddPostScreen(
     navController: NavController,
     postType: String,
-    // ✅ PERBAIKAN: Menggunakan Long untuk konsistensi ID
     postId: Long = 0L,
     viewModel: KomunitasViewModel = hiltViewModel()
 ) {
     // ⚠️ GANTI DENGAN DATA USER ASLI YANG SUDAH LOGIN
     val currentUserName = "user_yang_sedang_login"
 
-    // Mencari postingan yang akan diedit dari ViewModel. postId sekarang Long.
+    // Mencari postingan yang akan diedit dari ViewModel.
     val existingPost = viewModel.posts.collectAsState().value.find { it.id == postId }
 
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) } // Gunakan Uri?
 
     val context = LocalContext.current
+
+    // 🚨 PERBAIKAN 1: Activity Result Launcher untuk memilih gambar
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent() // Contract untuk ambil konten (gambar)
+    ) { uri: Uri? ->
+        // Callback: Jika URI tidak null, simpan ke state
+        selectedImageUri = uri
+    }
 
     // Mengisi form jika dalam mode EDIT
     LaunchedEffect(existingPost) {
         if (existingPost != null) {
             title = existingPost.title
             description = existingPost.description
-            selectedImageUri = existingPost.imageUrl
+            selectedImageUri = existingPost.imageUrl // Memuat URI gambar yang ada
         }
     }
 
@@ -87,7 +96,7 @@ fun AddPostScreen(
             verticalArrangement = Arrangement.spacedBy(DIMENS_16dp)
         ) {
 
-            // 1. INPUT GAMBAR (Placeholder)
+            // 1. INPUT GAMBAR (Diperbaiki menggunakan Launcher)
             item {
                 Box(
                     modifier = Modifier
@@ -95,7 +104,8 @@ fun AddPostScreen(
                         .height(DIMENS_200dp)
                         .background(Color.LightGray.copy(alpha = 0.5f), RoundedCornerShape(DIMENS_12dp))
                         .clickable {
-                            Utils.displayToast(context, "Fitur upload gambar belum diimplementasikan.")
+                            // 🚨 PERBAIKAN 2: Panggil launcher saat diklik
+                            imagePickerLauncher.launch("image/*")
                         },
                     contentAlignment = Alignment.Center
                 ) {
@@ -117,7 +127,7 @@ fun AddPostScreen(
                 }
             }
 
-            // 2. JUDUL INPUT FIELD
+            // 2. JUDUL INPUT FIELD (Tidak Berubah)
             item {
                 OutlinedTextField(
                     value = title,
@@ -125,7 +135,10 @@ fun AddPostScreen(
                         if (it.length <= Constants.MAX_POST_TITLE_LENGTH) title = it
                     },
                     label = {
-                        Text("Judul Postingan (Maks ${Constants.MAX_POST_TITLE_LENGTH} karakter)")
+                        Text(
+                            text = "Judul Postingan (Maks ${Constants.MAX_POST_TITLE_LENGTH} karakter)",
+                            color = Black
+                        )
                     },
                     modifier = Modifier.fillMaxWidth(),
                     colors = TextFieldDefaults.outlinedTextFieldColors(
@@ -141,7 +154,7 @@ fun AddPostScreen(
                 )
             }
 
-            // 3. DESKRIPSI INPUT FIELD
+            // 3. DESKRIPSI INPUT FIELD (Tidak Berubah)
             item {
                 OutlinedTextField(
                     value = description,
@@ -149,8 +162,10 @@ fun AddPostScreen(
                         if (it.length <= Constants.MAX_POST_DESCRIPTION_LENGTH) description = it
                     },
                     label = {
-                        Text("Isi Postingan (Maks ${Constants.MAX_POST_DESCRIPTION_LENGTH} karakter)")
-                    },
+                        Text("Isi Postingan (Maks ${Constants.MAX_POST_DESCRIPTION_LENGTH} karakter)",
+                        color = Black
+                        )
+                            },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(DIMENS_150dp),
@@ -173,19 +188,26 @@ fun AddPostScreen(
                     onClick = {
                         if (title.isNotBlank() && description.isNotBlank() && currentUserName.isNotBlank()) {
 
-                            val postToSubmit = existingPost?.copy(
-                                title = title,
-                                description = description,
-                                imageUrl = selectedImageUri,
-                            ) ?: Post(
-                                // ID bertipe Long
-                                id = postId,
-                                type = postType,
-                                title = title,
-                                description = description,
-                                imageUrl = selectedImageUri,
-                                owner = currentUserName
-                            )
+                            val postToSubmit = if (existingPost != null) {
+                                // Mode EDIT
+                                existingPost.copy(
+                                    title = title,
+                                    description = description,
+                                    imageUrl = selectedImageUri,
+                                )
+                            } else {
+                                // Mode TAMBAH BARU
+                                Post(
+                                    // 🚨 PERBAIKAN 3: ID DIBUAT UNIK DI VIEWMDL
+                                    // ID di sini dibiarkan 0L, dan ViewModel akan menetapkan ID unik
+                                    id = 0L,
+                                    type = postType,
+                                    title = title,
+                                    description = description,
+                                    imageUrl = selectedImageUri,
+                                    owner = currentUserName
+                                )
+                            }
 
                             viewModel.savePost(postToSubmit)
                             Utils.displayToast(context, if (postId == 0L) "Postingan Dibuat!" else "Postingan Diperbarui!")
@@ -202,7 +224,7 @@ fun AddPostScreen(
                 ) {
                     Text(
                         text = if (postId == 0L) "Kirim Postingan" else "Update Postingan",
-                        color = Color.White,
+                        color = Color.Black,
                         fontWeight = FontWeight.Bold,
                         fontSize = TEXT_SIZE_16sp
                     )

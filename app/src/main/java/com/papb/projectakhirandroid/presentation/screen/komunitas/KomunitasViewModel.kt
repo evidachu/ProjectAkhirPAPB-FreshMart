@@ -6,7 +6,7 @@ import com.papb.projectakhirandroid.domain.model.Post
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import android.net.Uri // Diperlukan karena Post.imageUrl bertipe Uri?
+import android.net.Uri
 
 class KomunitasViewModel(/* ... dependencies ... */) : ViewModel() {
 
@@ -27,19 +27,25 @@ class KomunitasViewModel(/* ... dependencies ... */) : ViewModel() {
         viewModelScope.launch {
             val currentPosts = _posts.value.toMutableList()
 
-            if (post.id != 0L) { // Cek menggunakan Long
-                // EDIT: Cari berdasarkan ID dan Ganti
+            if (post.id != 0L) {
+                // LOGIKA EDIT: Postingan Lama harus diganti
                 val existingPostIndex = currentPosts.indexOfFirst { it.id == post.id }
+
                 if (existingPostIndex >= 0) {
+                    // Update postingan di indeks yang sama
                     currentPosts[existingPostIndex] = post
                 }
             } else {
-                // ADD/CREATE: Beri ID baru (tipe Long)
-                val newId = (currentPosts.maxOfOrNull { it.id } ?: 0L) + 1L // ID baru bertipe Long
-                currentPosts.add(post.copy(id = newId))
+                // LOGIKA ADD/CREATE: Beri ID baru, tambahkan di posisi 0 (paling atas)
+                // Pastikan newId selalu lebih besar dari ID yang ada
+                val newId = (currentPosts.maxOfOrNull { it.id } ?: 0L) + 1L
+
+                // Tambahkan postingan baru di indeks 0 (paling atas/terbaru)
+                currentPosts.add(0, post.copy(id = newId))
             }
+
+            // PENTING: Mengatur value ke list baru memaksa Compose untuk Recompose
             _posts.value = currentPosts.toList()
-            // TODO: Panggil repository untuk menyimpan ke database di skenario nyata
         }
     }
 
@@ -48,6 +54,7 @@ class KomunitasViewModel(/* ... dependencies ... */) : ViewModel() {
      */
     fun deletePost(post: Post) {
         viewModelScope.launch {
+            // Filter list dan update value
             _posts.value = _posts.value.filter { it.id != post.id }
             // TODO: Panggil repository untuk menghapus dari database
         }
