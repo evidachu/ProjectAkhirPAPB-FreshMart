@@ -31,7 +31,8 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val uiState by authViewModel.uiState.collectAsState()
 
-                if (uiState.isLoading) {
+                // Tambahkan pengecekan loading session awal
+                if (uiState.isLoading || uiState.isCheckingSession) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center

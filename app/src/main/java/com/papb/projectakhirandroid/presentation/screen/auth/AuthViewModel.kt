@@ -21,6 +21,18 @@ class AuthViewModel @Inject constructor(
 
     init {
         observeAuthState()
+        observeSessionCheck()
+    }
+
+    /**
+     * Memantau apakah repository sudah selesai melakukan pengecekan session awal.
+     */
+    private fun observeSessionCheck() {
+        viewModelScope.launch {
+            authRepository.isReady.collect { isReady ->
+                _uiState.update { it.copy(isCheckingSession = !isReady) }
+            }
+        }
     }
 
     /**
@@ -81,6 +93,7 @@ class AuthViewModel @Inject constructor(
 
 data class AuthUiState(
     val isLoading: Boolean = false,
+    val isCheckingSession: Boolean = true, // Default true agar UI menunggu check session selesai
     val isLoggedIn: Boolean = false,
     val error: String? = null
 )

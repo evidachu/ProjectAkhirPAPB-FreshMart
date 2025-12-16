@@ -1,17 +1,25 @@
 package com.papb.projectakhirandroid.di
 
+import android.content.Context
 import com.papb.projectakhirandroid.data.SupabaseClientProvider
 import com.papb.projectakhirandroid.data.local.ProductDatabase
 import com.papb.projectakhirandroid.data.repository.LocalDataSourceImpl
 import com.papb.projectakhirandroid.data.repository.OnBoardingOperationImpl
 import com.papb.projectakhirandroid.data.repository.Repository
+import com.papb.projectakhirandroid.data.session.SharedPreferencesSessionManager
 import com.papb.projectakhirandroid.domain.repository.LocalDataSource
 import com.papb.projectakhirandroid.domain.repository.OnBoardingOperation
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.gotrue.Auth
+import io.github.jan.supabase.gotrue.FlowType
+import io.github.jan.supabase.gotrue.auth
+import io.github.jan.supabase.postgrest.Postgrest
 import javax.inject.Singleton
 
 @Module
@@ -20,7 +28,26 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideSupabaseClient(): SupabaseClient = SupabaseClientProvider.client
+    fun provideSupabaseClient(
+        @ApplicationContext context: Context
+    ): SupabaseClient {
+        return createSupabaseClient(
+            supabaseUrl = SupabaseClientProvider.SUPABASE_URL,
+            supabaseKey = SupabaseClientProvider.SUPABASE_ANON_KEY
+        ) {
+            install(Auth) {
+                // Konfigurasi session persistence agar login tetap tersimpan
+                // menggunakan SharedPreferences
+                sessionManager = SharedPreferencesSessionManager(context)
+                
+                // Matikan autoLoadFromStorage agar AuthRepository bisa mengontrol
+                // kapan loading selesai (untuk keperluan UI loading spinner)
+                autoLoadFromStorage = false
+                alwaysAutoRefresh = true
+            }
+            install(Postgrest)
+        }
+    }
 
     @Provides
     @Singleton

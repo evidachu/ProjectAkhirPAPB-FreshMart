@@ -8,6 +8,8 @@ import io.github.jan.supabase.gotrue.providers.builtin.Email
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -20,20 +22,26 @@ class AuthRepository @Inject constructor(
 
     private val authClient = supabaseClient.auth
 
+    // Indikator apakah proses loading session awal sudah selesai
+    private val _isReady = MutableStateFlow(false)
+    val isReady = _isReady.asStateFlow()
+
     // Menggunakan sessionStatus dari Supabase untuk memantau perubahan status autentikasi secara real-time.
-    // Ini menangani kasus login, logout, dan pemuatan sesi dari penyimpanan lokal (auto-login).
     val authState: Flow<Boolean> = authClient.sessionStatus.map { status ->
         status is SessionStatus.Authenticated
     }
 
     init {
-        // PENTING: Supabase Auth perlu memuat session dari storage saat aplikasi dimulai
-        // jika menggunakan Persistent Storage.
+        // PENTING: Load session dari storage saat aplikasi dimulai
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                // Mencoba memuat sesi yang tersimpan
                 authClient.loadFromStorage()
             } catch (e: Exception) {
-                // Ignore if load fails, user will just be logged out
+                // Ignore errors, user will be logged out
+            } finally {
+                // Tandai bahwa inisialisasi selesai, entah berhasil atau gagal load
+                _isReady.value = true
             }
         }
     }
@@ -75,15 +83,14 @@ class AuthRepository @Inject constructor(
         try {
             authClient.signOut()
         } catch (e: Exception) {
-            // Jika gagal logout di server, kita tidak perlu melakukan apa-apa karena state lokal akan tetap update jika di-handle library
+            // Error handling ignored for logout
         }
     }
 
     /**
-     * Memeriksa apakah ada user yang sedang login saat ini (Synchronous check).
+     * Memeriksa apakah ada user yang sedang login saat ini.
      */
     fun isUserLoggedIn(): Boolean {
-        // Kita cek session yang ada di memory saat ini
         return authClient.currentSessionOrNull() != null
     }
 }
