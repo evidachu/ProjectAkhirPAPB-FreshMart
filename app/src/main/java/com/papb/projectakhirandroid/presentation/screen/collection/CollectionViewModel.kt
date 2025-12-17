@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -33,10 +34,10 @@ class CollectionViewModel @Inject constructor(
         }
     }
 
-    fun addCollection(name: String) {
+    fun addCollection(name: String, imageFile: File?) {
         viewModelScope.launch {
             _isLoading.value = true
-            val success = repository.addCollection(name)
+            val success = repository.addCollection(name, imageFile)
             if (success) {
                 loadCollections()
             }

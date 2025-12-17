@@ -8,7 +8,9 @@ import com.papb.projectakhirandroid.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -25,6 +27,9 @@ class ProfileViewModel @Inject constructor(
 
     private val _profileImageUri = MutableStateFlow<Uri?>(null)
     val profileImageUri: StateFlow<Uri?> = _profileImageUri
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     init {
         // Start observing local data
@@ -45,24 +50,36 @@ class ProfileViewModel @Inject constructor(
         }
         viewModelScope.launch {
             userRepository.getProfileImageUri().collect { uriString ->
+                // Add timestamp only if it's a network URL to bust cache, local URIs don't need it
                 _profileImageUri.value = uriString?.let { Uri.parse(it) }
             }
         }
     }
 
-    fun saveProfile(name: String, email: String) {
+    fun saveProfile(name: String, email: String, imageFile: File?, onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
-            // 1. Simpan ke DataStore Lokal dulu (Agar UI cepat update)
+            _isLoading.value = true
+
+            // 1. Jika ada gambar baru, upload dulu
+            var finalAvatarUrl = _profileImageUri.value?.toString()
+            
+            if (imageFile != null) {
+                val uploadedUrl = userRepository.uploadProfileImage(imageFile)
+                if (uploadedUrl != null) {
+                    finalAvatarUrl = uploadedUrl
+                }
+            }
+
+            // 2. Simpan ke DataStore Lokal (Agar UI cepat update)
             userRepository.saveName(name)
             userRepository.saveEmail(email)
-            
-            // Image upload has been removed, so we only handle name and email
-            // We use the existing profileImageUri if it exists in DataStore/State
-            val currentImageUriString = _profileImageUri.value?.toString()
+            userRepository.saveProfileImageUri(finalAvatarUrl)
 
-            // 2. Simpan ke Database Supabase (Cloud)
-            // Kita kirim data final (Nama, Email, dan URL Gambar yg sudah ada) ke tabel profiles
-            userRepository.upsertUserProfileToSupabase(name, email, currentImageUriString)
+            // 3. Simpan ke Database Supabase (Cloud)
+            userRepository.upsertUserProfileToSupabase(name, email, finalAvatarUrl)
+
+            _isLoading.value = false
+            onSuccess()
         }
     }
 

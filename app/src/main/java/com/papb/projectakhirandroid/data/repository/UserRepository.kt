@@ -2,6 +2,7 @@ package com.papb.projectakhirandroid.data.repository
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.papb.projectakhirandroid.data.dataStore
@@ -10,8 +11,12 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.storage.storage
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
+import java.io.File
 import javax.inject.Inject
 
 class UserRepository @Inject constructor(
@@ -61,14 +66,47 @@ class UserRepository @Inject constructor(
 
     // 1. Dapatkan ID User yang sedang login
     fun getCurrentUserId(): String? {
-        // Menggunakan properti 'auth' (sebelumnya 'gotrue')
         return supabaseClient.auth.currentSessionOrNull()?.user?.id
+    }
+
+    // Helper: Upload Profile Image to Storage (Bucket: avatars)
+    suspend fun uploadProfileImage(file: File): String? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val userId = getCurrentUserId() ?: return@withContext null
+                // Gunakan nama file yang unik atau overwrite file user (misal: "avatar_userid.jpg")
+                // Agar hemat storage, kita overwrite saja avatar lama user tersebut
+                val fileName = "avatar_$userId.jpg"
+                // Menggunakan bucket 'avatars' sesuai request
+                val bucket = supabaseClient.storage.from("avatars")
+
+                // Upload file (upsert = true agar menimpa file lama jika ada)
+                bucket.upload(fileName, file.readBytes(), upsert = true)
+
+                // Get public URL
+                // Kita tambahkan timestamp dummy di URL agar Coil mereload gambar (cache busting)
+                val publicUrl = bucket.publicUrl(fileName)
+                val publicUrlWithTimestamp = "$publicUrl?t=${System.currentTimeMillis()}"
+                
+                Log.d("UserRepository", "Upload success: $publicUrlWithTimestamp")
+                publicUrlWithTimestamp
+            } catch (e: Exception) {
+                Log.e("UserRepository", "Upload failed image", e)
+                null
+            }
+        }
     }
 
     // 2. Simpan Profil ke Database Supabase
     suspend fun upsertUserProfileToSupabase(name: String, email: String, avatarUrl: String?) {
         val userId = getCurrentUserId()
         if (userId != null) {
+            
+            // Optimistic Update: Simpan ke Lokal dulu agar UI langsung berubah
+            saveName(name)
+            saveEmail(email)
+            saveProfileImageUri(avatarUrl)
+            
             val userProfile = UserProfile(
                 id = userId,
                 fullName = name,
@@ -76,13 +114,16 @@ class UserRepository @Inject constructor(
                 avatarUrl = avatarUrl
             )
             try {
-                // Perbaikan: onConflict adalah parameter fungsi, bukan di dalam lambda
+                // Simpan ke Supabase
                 supabaseClient.postgrest.from("profiles").upsert(
                     value = userProfile,
                     onConflict = "id"
                 )
             } catch (e: Exception) {
                 e.printStackTrace()
+                Log.e("UserRepository", "Failed to upsert profile to Supabase", e)
+                // Note: Data lokal sudah terupdate, jadi UI aman. 
+                // Namun data cloud mungkin tidak sinkron jika error terus berlanjut.
             }
         }
     }
