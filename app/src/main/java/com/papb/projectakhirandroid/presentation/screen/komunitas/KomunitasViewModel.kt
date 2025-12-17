@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -48,7 +49,8 @@ class KomunitasViewModel @Inject constructor(
     fun createPost(
         title: String,
         description: String,
-        type: String
+        type: String,
+        imageFile: File?
     ) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -60,7 +62,8 @@ class KomunitasViewModel @Inject constructor(
                 title = title,
                 description = description,
                 type = type,
-                ownerName = currentUserName
+                ownerName = currentUserName,
+                imageFile = imageFile
             )
 
             if (success) {
@@ -78,7 +81,8 @@ class KomunitasViewModel @Inject constructor(
         id: Long,
         title: String,
         description: String,
-        existingImageUrl: String?
+        existingImageUrl: String?,
+        newImageFile: File?
     ) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -87,7 +91,8 @@ class KomunitasViewModel @Inject constructor(
                 id = id,
                 title = title,
                 description = description,
-                existingImageUrl = existingImageUrl
+                existingImageUrl = existingImageUrl,
+                newImageFile = newImageFile
             )
 
             if (success) {

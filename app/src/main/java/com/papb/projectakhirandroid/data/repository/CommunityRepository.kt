@@ -3,16 +3,19 @@
 package com.papb.projectakhirandroid.data.repository
 
 import android.content.Context
+import android.util.Log
 import com.papb.projectakhirandroid.domain.model.Post
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.io.File
 import javax.inject.Inject
 
 // --- Data Transfer Objects (DTO) ---
@@ -53,22 +56,46 @@ class CommunityRepository @Inject constructor(
         }
     }
 
+    // Helper: Upload Image to Storage (Bucket: community)
+    private suspend fun uploadPostImage(file: File): String? {
+        return try {
+            val fileName = "post_${System.currentTimeMillis()}.jpg"
+            // Menggunakan bucket 'community' sesuai request
+            val bucket = supabaseClient.storage.from("community")
+            
+            // Upload file
+            bucket.upload(fileName, file.readBytes())
+            
+            // Get public URL
+            val publicUrl = bucket.publicUrl(fileName)
+            Log.d("CommunityRepository", "Upload success: $publicUrl")
+            publicUrl
+        } catch (e: Exception) {
+            Log.e("CommunityRepository", "Upload failed image", e)
+            null
+        }
+    }
+
     // 2. Create Post (Create)
     suspend fun createPost(
         title: String,
         description: String,
         type: String,
-        ownerName: String
+        ownerName: String,
+        imageFile: File?
     ): Boolean {
         return withContext(Dispatchers.IO) {
             try {
                 val userId = supabaseClient.auth.currentSessionOrNull()?.user?.id
 
+                // Upload image if exists
+                val imageUrl = if (imageFile != null) uploadPostImage(imageFile) else null
+
                 val newPost = CreatePostDto(
                     type = type,
                     title = title,
                     description = description,
-                    imageUrl = null, // No image upload
+                    imageUrl = imageUrl,
                     ownerName = ownerName,
                     ownerId = userId
                 )
@@ -87,14 +114,22 @@ class CommunityRepository @Inject constructor(
         id: Long,
         title: String,
         description: String,
-        existingImageUrl: String?
+        existingImageUrl: String?,
+        newImageFile: File?
     ): Boolean {
         return withContext(Dispatchers.IO) {
             try {
+                // Determine the final image URL
+                val finalImageUrl = if (newImageFile != null) {
+                    uploadPostImage(newImageFile)
+                } else {
+                    existingImageUrl
+                }
+
                 val updateData = UpdatePostDto(
                     title = title,
                     description = description,
-                    imageUrl = existingImageUrl // Keep existing if any
+                    imageUrl = finalImageUrl
                 )
 
                 supabaseClient.postgrest.from("posts").update(updateData) {

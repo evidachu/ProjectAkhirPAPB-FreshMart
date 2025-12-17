@@ -1,5 +1,10 @@
 package com.papb.projectakhirandroid.presentation.screen.komunitas
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,15 +14,24 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.papb.projectakhirandroid.ui.theme.*
 import com.papb.projectakhirandroid.utils.Constants
+import com.papb.projectakhirandroid.utils.ImageUtils
 import com.papb.projectakhirandroid.utils.Utils
+import kotlinx.coroutines.launch
+import java.io.File
 
 @Composable
 fun AddPostScreen(
@@ -31,9 +45,30 @@ fun AddPostScreen(
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var existingImageUrl by remember { mutableStateOf<String?>(null) }
+    
+    // State untuk upload gambar
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var selectedImageFile by remember { mutableStateOf<File?>(null) }
+    val coroutineScope = rememberCoroutineScope()
 
     val context = LocalContext.current
     val isLoading by viewModel.isLoading.collectAsState()
+
+    // Setup Photo Picker
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            selectedImageUri = uri
+            coroutineScope.launch {
+                val file = ImageUtils.uriToTempFile(context, uri)
+                selectedImageFile = file
+                if (file == null) {
+                     Utils.displayToast(context, "Gagal memproses gambar")
+                }
+            }
+        }
+    }
 
     LaunchedEffect(existingPost) {
         if (existingPost != null) {
@@ -130,7 +165,74 @@ fun AddPostScreen(
                     )
                 }
 
-                // 3. TOMBOL KIRIM
+                // 3. UPLOAD GAMBAR SECTION
+                item {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "Gambar (Opsional)",
+                            fontFamily = GilroyFontFamily,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Black,
+                            fontSize = TEXT_SIZE_14sp,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+
+                        // Preview Gambar
+                        if (selectedImageUri != null) {
+                            Box(modifier = Modifier.fillMaxWidth().height(200.dp)) {
+                                AsyncImage(
+                                    model = selectedImageUri,
+                                    contentDescription = "Selected Image",
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(RoundedCornerShape(8.dp)),
+                                    contentScale = ContentScale.Crop
+                                )
+                                // Tombol Hapus Gambar
+                                Button(
+                                    onClick = {
+                                        selectedImageUri = null
+                                        selectedImageFile = null
+                                    },
+                                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red),
+                                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
+                                ) {
+                                    Text("Hapus", color = Color.White, fontSize = 12.sp)
+                                }
+                            }
+                        } else if (existingImageUrl != null) {
+                             // Preview Gambar Existing (jika edit)
+                             Box(modifier = Modifier.fillMaxWidth().height(200.dp)) {
+                                AsyncImage(
+                                    model = existingImageUrl,
+                                    contentDescription = "Existing Image",
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(RoundedCornerShape(8.dp)),
+                                    contentScale = ContentScale.Crop
+                                )
+                                // Saat edit, jika user pilih gambar baru, gambar lama otomatis terganti
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("Pilih gambar baru untuk mengganti", color = Color.Gray, fontSize = 12.sp)
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Tombol Pilih Gambar
+                        OutlinedButton(
+                            onClick = { 
+                                launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Green)
+                        ) {
+                            Text("Pilih Gambar dari Galeri")
+                        }
+                    }
+                }
+
+                // 4. TOMBOL KIRIM
                 item {
                     Button(
                         onClick = {
@@ -139,7 +241,8 @@ fun AddPostScreen(
                                     viewModel.createPost(
                                         title = title,
                                         description = description,
-                                        type = postType
+                                        type = postType,
+                                        imageFile = selectedImageFile
                                     )
                                     Utils.displayToast(context, "Memposting...")
                                 } else {
@@ -147,7 +250,8 @@ fun AddPostScreen(
                                         id = postId, 
                                         title = title,
                                         description = description,
-                                        existingImageUrl = existingImageUrl
+                                        existingImageUrl = existingImageUrl,
+                                        newImageFile = selectedImageFile
                                     )
                                     Utils.displayToast(context, "Memperbarui...")
                                 }
