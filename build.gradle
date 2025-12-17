@@ -28,6 +28,9 @@ plugins {
 
     // Plugin Kotlin
     id 'org.jetbrains.kotlin.android' version "$kotlin_version" apply false
+
+    // Plugin Kotlin Serialization (Tambahkan baris ini)
+    id 'org.jetbrains.kotlin.plugin.serialization' version "$kotlin_version" apply false
 }
 
 // Tambahkan konfigurasi di sini jika diperlukan oleh plugin lain

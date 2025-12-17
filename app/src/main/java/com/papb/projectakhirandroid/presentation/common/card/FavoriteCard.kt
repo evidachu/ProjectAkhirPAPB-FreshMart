@@ -12,10 +12,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.papb.projectakhirandroid.domain.model.ProductItem
 import com.papb.projectakhirandroid.ui.theme.*
 import com.papb.projectakhirandroid.R
@@ -35,10 +40,27 @@ fun FavoriteCard(
         Row(
             modifier = Modifier.fillMaxWidth()
         ) {
-            Image(
-                painter = painterResource(id = productItem.image),
-                contentDescription = stringResource(id = R.string.image_product)
-            )
+            // LOGIKA GAMBAR: Cek apakah URL ada. Jika ya, load dari internet (Coil). Jika tidak, pakai placeholder.
+            if (productItem.image.isNullOrEmpty()) {
+                Image(
+                    painter = painterResource(id = R.drawable.product1), // Default Placeholder
+                    contentDescription = stringResource(id = R.string.image_product),
+                    modifier = Modifier.size(80.dp), // Beri ukuran tetap agar rapi
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(productItem.image)
+                        .crossfade(true)
+                        .placeholder(R.drawable.product1)
+                        .error(R.drawable.product1)
+                        .build(),
+                    contentDescription = stringResource(id = R.string.image_product),
+                    modifier = Modifier.size(80.dp), // Beri ukuran tetap agar rapi
+                    contentScale = ContentScale.Crop
+                )
+            }
 
             Spacer(modifier = Modifier.padding(start = DIMENS_16dp))
 
@@ -98,12 +120,12 @@ fun FavoriteCardPreview() {
             id = 1,
             title = "Organic Bananas",
             description = "",
-            image = R.drawable.product10,
+            image = null, // Set null untuk preview agar tidak error type mismatch
             unit = "7pcs, Priceg",
             price = 4.99,
             nutritions = "100gr",
             review = 4.0,
-            category = "Buah & Sayur" // Added the missing parameter
+            category = "Buah & Sayur"
         )
     )
 }

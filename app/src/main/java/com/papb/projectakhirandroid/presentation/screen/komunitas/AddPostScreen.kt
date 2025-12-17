@@ -1,8 +1,10 @@
 package com.papb.projectakhirandroid.presentation.screen.komunitas
 
+import android.Manifest
 import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult // ✅ Tambah Import
-import androidx.activity.result.contract.ActivityResultContracts // ✅ Tambah Import
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,11 +26,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
-import com.papb.projectakhirandroid.domain.model.Post
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import com.papb.projectakhirandroid.ui.theme.*
 import com.papb.projectakhirandroid.utils.Constants
 import com.papb.projectakhirandroid.utils.Utils
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun AddPostScreen(
     navController: NavController,
@@ -36,32 +41,37 @@ fun AddPostScreen(
     postId: Long = 0L,
     viewModel: KomunitasViewModel = hiltViewModel()
 ) {
-    // ⚠️ GANTI DENGAN DATA USER ASLI YANG SUDAH LOGIN
-    val currentUserName = "user_yang_sedang_login"
-
-    // Mencari postingan yang akan diedit dari ViewModel.
     val existingPost = viewModel.posts.collectAsState().value.find { it.id == postId }
 
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) } // Gunakan Uri?
+    
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) } 
+    var existingImageUrl by remember { mutableStateOf<String?>(null) }
 
     val context = LocalContext.current
+    val isLoading by viewModel.isLoading.collectAsState()
 
-    // 🚨 PERBAIKAN 1: Activity Result Launcher untuk memilih gambar
+    // 1. Launcher Galeri
     val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent() // Contract untuk ambil konten (gambar)
+        contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        // Callback: Jika URI tidak null, simpan ke state
         selectedImageUri = uri
     }
 
-    // Mengisi form jika dalam mode EDIT
+    // 2. Permission State & Launcher
+    val permissionToRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Manifest.permission.READ_MEDIA_IMAGES
+    } else {
+        Manifest.permission.READ_EXTERNAL_STORAGE
+    }
+    val permissionState = rememberPermissionState(permission = permissionToRequest)
+
     LaunchedEffect(existingPost) {
         if (existingPost != null) {
             title = existingPost.title
             description = existingPost.description
-            selectedImageUri = existingPost.imageUrl // Memuat URI gambar yang ada
+            existingImageUrl = existingPost.imageUrl 
         }
     }
 
@@ -87,148 +97,164 @@ fun AddPostScreen(
             )
         }
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = DIMENS_16dp, vertical = DIMENS_16dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(DIMENS_16dp)
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = DIMENS_16dp, vertical = DIMENS_16dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(DIMENS_16dp)
+            ) {
 
-            // 1. INPUT GAMBAR (Diperbaiki menggunakan Launcher)
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(DIMENS_200dp)
-                        .background(Color.LightGray.copy(alpha = 0.5f), RoundedCornerShape(DIMENS_12dp))
-                        .clickable {
-                            // 🚨 PERBAIKAN 2: Panggil launcher saat diklik
-                            imagePickerLauncher.launch("image/*")
+                // 1. INPUT GAMBAR (DENGAN PERMISSION CHECK)
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(DIMENS_200dp)
+                            .background(Color.LightGray.copy(alpha = 0.5f), RoundedCornerShape(DIMENS_12dp))
+                            .clickable {
+                                // Cek izin sebelum buka galeri
+                                if (permissionState.status.isGranted) {
+                                    imagePickerLauncher.launch("image/*")
+                                } else {
+                                    permissionState.launchPermissionRequest()
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        val painter = if (selectedImageUri != null) {
+                            rememberAsyncImagePainter(selectedImageUri)
+                        } else if (existingImageUrl != null) {
+                            rememberAsyncImagePainter(existingImageUrl)
+                        } else {
+                            null
+                        }
+
+                        if (painter != null) {
+                            Image(
+                                painter = painter,
+                                contentDescription = "Gambar Postingan",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Icon(
+                                Icons.Filled.Image,
+                                contentDescription = "Pilih Gambar",
+                                modifier = Modifier.size(DIMENS_64dp),
+                                tint = Color.Gray
+                            )
+                        }
+                    }
+                }
+
+                // 2. JUDUL INPUT FIELD
+                item {
+                    OutlinedTextField(
+                        value = title,
+                        onValueChange = {
+                            if (it.length <= Constants.MAX_POST_TITLE_LENGTH) title = it
                         },
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (selectedImageUri != null) {
-                        Image(
-                            painter = rememberAsyncImagePainter(selectedImageUri),
-                            contentDescription = "Gambar Postingan",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Icon(
-                            Icons.Filled.Image,
-                            contentDescription = "Pilih Gambar",
-                            modifier = Modifier.size(DIMENS_64dp),
-                            tint = Color.Gray
+                        label = {
+                            Text(
+                                text = "Judul Postingan (Maks ${Constants.MAX_POST_TITLE_LENGTH} karakter)",
+                                color = Black
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                            focusedBorderColor = Green,
+                            unfocusedBorderColor = Color.Gray,
+                            cursorColor = Green,
+                            focusedLabelColor = Green,
+                            unfocusedLabelColor = Color.Gray,
+                            textColor = Black
+                        ),
+                        textStyle = TextStyle(fontSize = TEXT_SIZE_16sp, fontFamily = GilroyFontFamily),
+                        singleLine = true
+                    )
+                }
+
+                // 3. DESKRIPSI INPUT FIELD
+                item {
+                    OutlinedTextField(
+                        value = description,
+                        onValueChange = {
+                            if (it.length <= Constants.MAX_POST_DESCRIPTION_LENGTH) description = it
+                        },
+                        label = {
+                            Text("Isi Postingan (Maks ${Constants.MAX_POST_DESCRIPTION_LENGTH} karakter)",
+                            color = Black
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(DIMENS_150dp),
+                        singleLine = false,
+                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                            focusedBorderColor = Green,
+                            unfocusedBorderColor = Color.Gray,
+                            cursorColor = Green,
+                            focusedLabelColor = Green,
+                            unfocusedLabelColor = Color.Gray,
+                            textColor = Black
+                        ),
+                        textStyle = TextStyle(fontSize = TEXT_SIZE_14sp, fontFamily = GilroyFontFamily)
+                    )
+                }
+
+                // 4. TOMBOL KIRIM
+                item {
+                    Button(
+                        onClick = {
+                            if (title.isNotBlank() && description.isNotBlank()) {
+                                if (postId == 0L) { // Logic fix: check postId instead of existingPost object reference for clarity
+                                    viewModel.createPost(
+                                        title = title,
+                                        description = description,
+                                        type = postType,
+                                        imageUri = selectedImageUri
+                                    )
+                                    Utils.displayToast(context, "Memposting...")
+                                } else {
+                                    viewModel.updatePost(
+                                        id = postId, // Use the passed postId
+                                        title = title,
+                                        description = description,
+                                        imageUri = selectedImageUri,
+                                        existingImageUrl = existingImageUrl
+                                    )
+                                    Utils.displayToast(context, "Memperbarui...")
+                                }
+                                navController.popBackStack()
+                            } else {
+                                Utils.displayToast(context, "Tolong lengkapi judul dan deskripsi.")
+                            }
+                        },
+                        enabled = !isLoading,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(DIMENS_48dp),
+                        shape = RoundedCornerShape(DIMENS_8dp),
+                        colors = ButtonDefaults.buttonColors(backgroundColor = Green)
+                    ) {
+                        Text(
+                            text = if (isLoading) "Loading..." else if (postId == 0L) "Kirim Postingan" else "Update Postingan",
+                            color = Color.Black,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = TEXT_SIZE_16sp
                         )
                     }
                 }
             }
-
-            // 2. JUDUL INPUT FIELD (Tidak Berubah)
-            item {
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = {
-                        if (it.length <= Constants.MAX_POST_TITLE_LENGTH) title = it
-                    },
-                    label = {
-                        Text(
-                            text = "Judul Postingan (Maks ${Constants.MAX_POST_TITLE_LENGTH} karakter)",
-                            color = Black
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        focusedBorderColor = Green,
-                        unfocusedBorderColor = Color.Gray,
-                        cursorColor = Green,
-                        focusedLabelColor = Green,
-                        unfocusedLabelColor = Color.Gray,
-                        textColor = Black
-                    ),
-                    textStyle = TextStyle(fontSize = TEXT_SIZE_16sp, fontFamily = GilroyFontFamily),
-                    singleLine = true
+            
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = Green
                 )
-            }
-
-            // 3. DESKRIPSI INPUT FIELD (Tidak Berubah)
-            item {
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = {
-                        if (it.length <= Constants.MAX_POST_DESCRIPTION_LENGTH) description = it
-                    },
-                    label = {
-                        Text("Isi Postingan (Maks ${Constants.MAX_POST_DESCRIPTION_LENGTH} karakter)",
-                        color = Black
-                        )
-                            },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(DIMENS_150dp),
-                    singleLine = false,
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        focusedBorderColor = Green,
-                        unfocusedBorderColor = Color.Gray,
-                        cursorColor = Green,
-                        focusedLabelColor = Green,
-                        unfocusedLabelColor = Color.Gray,
-                        textColor = Black
-                    ),
-                    textStyle = TextStyle(fontSize = TEXT_SIZE_14sp, fontFamily = GilroyFontFamily)
-                )
-            }
-
-            // 4. TOMBOL KIRIM
-            item {
-                Button(
-                    onClick = {
-                        if (title.isNotBlank() && description.isNotBlank() && currentUserName.isNotBlank()) {
-
-                            val postToSubmit = if (existingPost != null) {
-                                // Mode EDIT
-                                existingPost.copy(
-                                    title = title,
-                                    description = description,
-                                    imageUrl = selectedImageUri,
-                                )
-                            } else {
-                                // Mode TAMBAH BARU
-                                Post(
-                                    // 🚨 PERBAIKAN 3: ID DIBUAT UNIK DI VIEWMDL
-                                    // ID di sini dibiarkan 0L, dan ViewModel akan menetapkan ID unik
-                                    id = 0L,
-                                    type = postType,
-                                    title = title,
-                                    description = description,
-                                    imageUrl = selectedImageUri,
-                                    owner = currentUserName
-                                )
-                            }
-
-                            viewModel.savePost(postToSubmit)
-                            Utils.displayToast(context, if (postId == 0L) "Postingan Dibuat!" else "Postingan Diperbarui!")
-                            navController.popBackStack()
-                        } else {
-                            Utils.displayToast(context, "Tolong lengkapi semua bidang.")
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(DIMENS_48dp),
-                    shape = RoundedCornerShape(DIMENS_8dp),
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Green)
-                ) {
-                    Text(
-                        text = if (postId == 0L) "Kirim Postingan" else "Update Postingan",
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = TEXT_SIZE_16sp
-                    )
-                }
             }
         }
     }

@@ -1,21 +1,37 @@
+@file:OptIn(kotlinx.serialization.InternalSerializationApi::class)
+
 package com.papb.projectakhirandroid.domain.model
 
-import android.net.Uri
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.InternalSerializationApi
 
+@Serializable
 data class Post(
-    // 🚨 PERBAIKAN: Set id default menjadi 0L. ID unik akan ditetapkan di ViewModel.
-    // Menghapus System.currentTimeMillis() di sini.
-    val id: Long = 0L,
+    @SerialName("id")
+    val id: Long = 0,
 
+    @SerialName("type")
     val type: String, // "resep" atau "tips"
-    val title: String,
-    val owner: String,
-    val description: String,
-    val imageUrl: Uri?, // Menggunakan Uri? untuk gambar dari galeri
 
-    // Tambahan field yang umum di Komunitas (dibiarkan default 0 atau timestamp)
-    val username: String = "Anonim",
+    @SerialName("title")
+    val title: String,
+
+    @SerialName("description")
+    val description: String,
+
+    @SerialName("image_url")
+    val imageUrl: String? = null, // URL string from Supabase
+
+    @SerialName("owner_name")
+    val owner: String, // Username display
+
+    @SerialName("owner_id")
+    val ownerId: String? = null, // Auth User ID
+
+    @SerialName("likes")
     val likes: Int = 0,
-    val commentsCount: Int = 0,
-    val timestamp: Long = System.currentTimeMillis() // Timestamp aman jika ini adalah waktu posting dibuat
+    
+    @SerialName("comments_count")
+    val commentsCount: Int = 0
 )

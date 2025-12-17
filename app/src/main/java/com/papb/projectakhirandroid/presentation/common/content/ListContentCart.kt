@@ -14,10 +14,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.papb.projectakhirandroid.domain.model.ProductItem
 import com.papb.projectakhirandroid.ui.theme.*
 import com.papb.projectakhirandroid.R
@@ -62,13 +66,32 @@ fun ContentCart(
                 .fillMaxWidth()
                 .padding(top = DIMENS_8dp)
         ) {
-            Image(
-                modifier = Modifier
-                    .size(width = DIMENS_64dp, height = DIMENS_64dp)
-                    .padding(start = DIMENS_8dp),
-                painter = painterResource(id = productItem.image),
-                contentDescription = stringResource(id = R.string.image_product)
-            )
+            
+            // Logic for displaying Image: URL vs Placeholder
+            if (productItem.image.isNullOrEmpty()) {
+                Image(
+                    modifier = Modifier
+                        .size(width = DIMENS_64dp, height = DIMENS_64dp)
+                        .padding(start = DIMENS_8dp),
+                    painter = painterResource(id = R.drawable.product1), // Placeholder
+                    contentDescription = stringResource(id = R.string.image_product),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(productItem.image)
+                        .crossfade(true)
+                        .placeholder(R.drawable.product1)
+                        .error(R.drawable.product1)
+                        .build(),
+                    contentDescription = stringResource(id = R.string.image_product),
+                    modifier = Modifier
+                        .size(width = DIMENS_64dp, height = DIMENS_64dp)
+                        .padding(start = DIMENS_8dp),
+                    contentScale = ContentScale.Crop
+                )
+            }
 
             Column(
                 modifier = Modifier
@@ -130,13 +153,13 @@ fun ContentCartPreview() {
             id = 1,
             title = "Organic Bananas",
             description = "Apples are nutritious. Apples may be good for weight loss. apples may be good for your heart. As part of a healtful and varied diet.",
-            image = R.drawable.product2,
+            image = null, // Set null for preview
             unit = "7pcs, Priceg",
             price = 4.99,
             quantity = 2, // Simulasi 2 item
             nutritions = "100gr",
             review = 4.0,
-            category = "Buah & Sayur" // Added the missing parameter
+            category = "Buah & Sayur"
         ),
         onClickDeleteCart = {}
     )

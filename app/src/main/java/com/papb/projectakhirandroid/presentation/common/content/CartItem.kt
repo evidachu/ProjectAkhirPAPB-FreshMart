@@ -12,9 +12,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.papb.projectakhirandroid.R
 import com.papb.projectakhirandroid.domain.model.ProductItem
 import com.papb.projectakhirandroid.ui.theme.*
@@ -33,13 +37,31 @@ fun ContentCart(
                 .fillMaxWidth()
                 .padding(top = DIMENS_8dp)
         ) {
-            Image(
-                modifier = Modifier
-                    .size(width = DIMENS_64dp, height = DIMENS_64dp)
-                    .padding(start = DIMENS_8dp),
-                painter = painterResource(id = productItem.image),
-                contentDescription = stringResource(id = R.string.image_product)
-            )
+            // Logic for displaying Image: URL vs Placeholder
+            if (productItem.image.isNullOrEmpty()) {
+                Image(
+                    modifier = Modifier
+                        .size(width = DIMENS_64dp, height = DIMENS_64dp)
+                        .padding(start = DIMENS_8dp),
+                    painter = painterResource(id = R.drawable.product1), // Default placeholder
+                    contentDescription = stringResource(id = R.string.image_product),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(productItem.image)
+                        .crossfade(true)
+                        .placeholder(R.drawable.product1)
+                        .error(R.drawable.product1)
+                        .build(),
+                    contentDescription = stringResource(id = R.string.image_product),
+                    modifier = Modifier
+                        .size(width = DIMENS_64dp, height = DIMENS_64dp)
+                        .padding(start = DIMENS_8dp),
+                    contentScale = ContentScale.Crop
+                )
+            }
 
             Column(
                 modifier = Modifier

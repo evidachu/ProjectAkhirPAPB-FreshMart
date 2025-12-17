@@ -12,6 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -19,14 +21,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.papb.projectakhirandroid.domain.model.ProductItem
-import com.papb.projectakhirandroid.ui.theme.*
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.papb.projectakhirandroid.R
-// ============================= FIX DI SINI =============================
-// Menambahkan import untuk mengatasi "Unresolved reference: Screen"
+import com.papb.projectakhirandroid.domain.model.ProductItem
 import com.papb.projectakhirandroid.navigation.screen.Screen
-// =======================================================================
-
+import com.papb.projectakhirandroid.ui.theme.*
 
 @Composable
 fun ProductCard(
@@ -41,7 +41,6 @@ fun ProductCard(
         modifier = modifier
             .width(DIMENS_174dp)
             .clickable {
-                // Baris ini sekarang akan berfungsi dengan benar setelah import ditambahkan
                 navController.navigate(Screen.Details.passProductId(productId = productItem.id))
             }
     ) {
@@ -50,14 +49,33 @@ fun ProductCard(
                 .fillMaxWidth()
                 .padding(DIMENS_12dp)
         ) {
-            Image(
-                painter = painterResource(id = productItem.image),
-                contentDescription = stringResource(R.string.image_product),
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .fillMaxWidth()
-                    .height(DIMENS_80dp)
-            )
+            // Logic for displaying Image: URL vs Placeholder
+            if (productItem.image.isNullOrEmpty()) {
+                Image(
+                    painter = painterResource(id = R.drawable.product1), // Default placeholder
+                    contentDescription = stringResource(R.string.image_product),
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .fillMaxWidth()
+                        .height(DIMENS_80dp),
+                    contentScale = ContentScale.Fit
+                )
+            } else {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(productItem.image)
+                        .crossfade(true)
+                        .placeholder(R.drawable.product1) // Placeholder while loading
+                        .error(R.drawable.product1) // Fallback if error
+                        .build(),
+                    contentDescription = stringResource(R.string.image_product),
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .fillMaxWidth()
+                        .height(DIMENS_80dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
 
             Spacer(modifier = Modifier.height(DIMENS_24dp))
 
@@ -66,7 +84,8 @@ fun ProductCard(
                 fontFamily = GilroyFontFamily,
                 fontWeight = FontWeight.Bold,
                 color = Black,
-                fontSize = TEXT_SIZE_16sp
+                fontSize = TEXT_SIZE_16sp,
+                maxLines = 1 // Limit title lines
             )
 
             Spacer(modifier = Modifier.height(DIMENS_6dp))
@@ -125,7 +144,7 @@ fun ItemProductPreview() {
             id = 1,
             title = "Organic Bananas",
             description = "",
-            image = R.drawable.product10,
+            image = null, // Preview with null image
             unit = "7pcs, Priceg",
             price = 4.99,
             nutritions = "100gr",

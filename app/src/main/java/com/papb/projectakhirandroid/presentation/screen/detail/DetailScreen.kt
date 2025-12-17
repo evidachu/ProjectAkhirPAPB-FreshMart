@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.runtime.*
@@ -30,7 +31,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.papb.projectakhirandroid.R
 import com.papb.projectakhirandroid.domain.model.ProductItem
 import com.papb.projectakhirandroid.domain.model.Review
@@ -47,39 +50,74 @@ fun DetailScreen(
 ) {
     val mContext = LocalContext.current
     val selectedProduct by detailViewModel.selectedProduct.collectAsState()
+    val reviews by detailViewModel.reviews.collectAsState()
+    val isLoading by detailViewModel.isLoading.collectAsState()
+    val currentUserId by detailViewModel.currentUserId.collectAsState()
+    
     var quantity by remember { mutableStateOf(1) }
+    var reviewToEdit by remember { mutableStateOf<Review?>(null) }
 
     Scaffold { padding ->
-        Column {
-            Column(
-                modifier = modifier
-                    .verticalScroll(rememberScrollState())
-                    .weight(1f)
-                    .padding(padding)
-            ) {
-                selectedProduct?.let { productItem ->
-                    DetailContentImageHeader(productItem = productItem)
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column {
+                Column(
+                    modifier = modifier
+                        .verticalScroll(rememberScrollState())
+                        .weight(1f)
+                        .padding(padding)
+                ) {
+                    selectedProduct?.let { productItem ->
+                        DetailContentImageHeader(productItem = productItem)
 
-                    Spacer(modifier = Modifier.height(DIMENS_24dp))
+                        Spacer(modifier = Modifier.height(DIMENS_24dp))
 
-                    DetailContentDescription(productItem = productItem) { newQuantity ->
-                        quantity = newQuantity
+                        DetailContentDescription(
+                            productItem = productItem,
+                            reviews = reviews,
+                            currentUserId = currentUserId,
+                            reviewToEdit = reviewToEdit,
+                            onEditReview = { reviewToEdit = it },
+                            onDeleteReview = { detailViewModel.deleteReview(it) },
+                            onCancelEdit = { reviewToEdit = null },
+                            onSubmitReview = { rating, text, image ->
+                                if (reviewToEdit == null) {
+                                    detailViewModel.submitReview(productItem.id, rating, text, image)
+                                    mContext.showToastShort("Ulasan Terkirim!")
+                                } else {
+                                    detailViewModel.updateReview(
+                                        reviewId = reviewToEdit!!.id,
+                                        productId = productItem.id,
+                                        rating = rating,
+                                        reviewText = text,
+                                        imageUri = image,
+                                        existingImageUrl = reviewToEdit!!.reviewImageUrl
+                                    )
+                                    mContext.showToastShort("Ulasan Diperbarui!")
+                                    reviewToEdit = null
+                                }
+                            },
+                            onQuantityChange = { newQuantity ->
+                                quantity = newQuantity
+                            }
+                        )
+                    }
+                }
+
+                Column {
+                    selectedProduct?.let {
+                        DetailButtonAddCart(
+                            productItem = it,
+                            quantity = quantity,
+                            onClickToCart = { productItem, qty ->
+                                mContext.showToastShort("Berhasil Masuk Keranjang: ${productItem.title} ($qty item)")
+                                detailViewModel.addCart(productItem.copy(isCart = true, quantity = qty))
+                            }
+                        )
                     }
                 }
             }
-
-            Column {
-                selectedProduct?.let {
-                    DetailButtonAddCart(
-                        productItem = it,
-                        quantity = quantity,
-                        onClickToCart = { productItem, qty ->
-                            mContext.showToastShort("Berhasil Masuk Keranjang: ${productItem.title} ($qty item)")
-                            // Update quantity sebelum masuk cart
-                            detailViewModel.addCart(productItem.copy(isCart = true, quantity = qty))
-                        }
-                    )
-                }
+            if (isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
         }
     }
@@ -96,11 +134,25 @@ fun DetailContentImageHeader(
             .blur(DIMENS_1dp)
             .fillMaxWidth(),
     ) {
-        Image(
-            painter = painterResource(id = productItem.image),
-            contentDescription = stringResource(id = R.string.image_product),
-            modifier = Modifier.height(DIMENS_353dp)
-        )
+        if (productItem.image.isNullOrEmpty()) {
+            Image(
+                painter = painterResource(id = R.drawable.product1),
+                contentDescription = stringResource(id = R.string.image_product),
+                modifier = Modifier.height(DIMENS_353dp)
+            )
+        } else {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(productItem.image)
+                    .crossfade(true)
+                    .placeholder(R.drawable.product1)
+                    .error(R.drawable.product1)
+                    .build(),
+                contentDescription = stringResource(id = R.string.image_product),
+                modifier = Modifier.height(DIMENS_353dp),
+                contentScale = ContentScale.Crop
+            )
+        }
     }
 }
 
@@ -108,12 +160,18 @@ fun DetailContentImageHeader(
 fun DetailContentDescription(
     modifier: Modifier = Modifier,
     productItem: ProductItem,
+    reviews: List<Review>,
+    currentUserId: String?,
+    reviewToEdit: Review?,
+    onEditReview: (Review) -> Unit,
+    onDeleteReview: (Review) -> Unit,
+    onCancelEdit: () -> Unit,
+    onSubmitReview: (Int, String, Uri?) -> Unit,
     onQuantityChange: (Int) -> Unit
 ) {
     var quantity by remember { mutableStateOf(1) }
-    var reviews by remember { mutableStateOf(productItem.reviews) }
-    var averageRating by remember { mutableStateOf(productItem.review) }
-    var editingReview by remember { mutableStateOf<Review?>(null) }
+
+    val averageRating = if (reviews.isNotEmpty()) reviews.map { it.rating }.average() else 0.0
 
     Column(
         modifier = modifier.padding(start = DIMENS_16dp, end = DIMENS_16dp)
@@ -151,13 +209,11 @@ fun DetailContentDescription(
 
         Spacer(modifier = Modifier.height(DIMENS_8dp))
 
-        // Price and Quantity Row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Quantity Controller
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -325,18 +381,9 @@ fun DetailContentDescription(
         SpacerDividerContent()
 
         CustomerReviewSection(
-            reviews = reviews,
-            editingReview = editingReview,
-            onReviewSubmitted = { newReview ->
-                if (editingReview == null) {
-                    reviews = reviews + newReview
-                } else {
-                    reviews = reviews.map { if (it.id == newReview.id) newReview else it }
-                }
-                val totalRating = reviews.sumOf { it.rating }
-                averageRating = totalRating.toDouble() / reviews.size
-                editingReview = null // Reset editing state
-            }
+            reviewToEdit = reviewToEdit,
+            onReviewSubmitted = onSubmitReview,
+            onCancelEdit = onCancelEdit
         )
 
         Spacer(modifier = Modifier.height(DIMENS_16dp))
@@ -344,8 +391,9 @@ fun DetailContentDescription(
         reviews.forEach { review ->
             ReviewItem(
                 review = review,
-                onEdit = { editingReview = it },
-                onDelete = { reviews = reviews - it }
+                isOwner = review.userId == currentUserId,
+                onEditClick = { onEditReview(review) },
+                onDeleteClick = { onDeleteReview(review) }
             )
             Spacer(modifier = Modifier.height(DIMENS_8dp))
         }
@@ -353,29 +401,38 @@ fun DetailContentDescription(
 }
 
 @Composable
-fun CustomerReviewSection(reviews: List<Review>, editingReview: Review?, onReviewSubmitted: (Review) -> Unit) {
+fun CustomerReviewSection(
+    reviewToEdit: Review?,
+    onReviewSubmitted: (Int, String, Uri?) -> Unit,
+    onCancelEdit: () -> Unit
+) {
     var rating by remember { mutableStateOf(0) }
     var reviewText by remember { mutableStateOf("") }
-    var selectedImageUri by remember { mutableStateOf<String?>(null) }
-    val context = LocalContext.current
-
-    LaunchedEffect(editingReview) {
-        if (editingReview != null) {
-            rating = editingReview.rating
-            reviewText = editingReview.reviewText
-            selectedImageUri = editingReview.reviewImage
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    
+    // Use LaunchedEffect to update state when reviewToEdit changes
+    LaunchedEffect(reviewToEdit) {
+        if (reviewToEdit != null) {
+            rating = reviewToEdit.rating
+            reviewText = reviewToEdit.reviewText
+            selectedImageUri = null // Reset new image selection, existing image is handled by ViewModel/Repo if not replaced
+        } else {
+            // Reset if null (cancelled or finished)
+            rating = 0
+            reviewText = ""
+            selectedImageUri = null
         }
     }
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        selectedImageUri = uri?.toString()
+        selectedImageUri = uri
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = if (editingReview == null) "Beri Ulasan" else "Edit Ulasan",
+            text = if (reviewToEdit == null) "Beri Ulasan" else "Edit Ulasan Anda",
             fontFamily = GilroyFontFamily,
             fontWeight = FontWeight.SemiBold,
             color = Color.Black,
@@ -416,74 +473,128 @@ fun CustomerReviewSection(reviews: List<Review>, editingReview: Review?, onRevie
                     .clip(RoundedCornerShape(DIMENS_8dp)),
                 contentScale = ContentScale.Crop
             )
+        } else if (reviewToEdit?.reviewImageUrl != null) {
+             // Show existing image if editing and no new image selected
+             AsyncImage(
+                model = reviewToEdit.reviewImageUrl,
+                contentDescription = "Existing review image",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(DIMENS_8dp)),
+                contentScale = ContentScale.Crop
+            )
         }
 
         Spacer(modifier = Modifier.height(DIMENS_8dp))
 
         Row {
             Button(onClick = { launcher.launch("image/*") }) {
-                Text("Upload Foto", color = Color.Black)
+                Text(if (selectedImageUri == null && reviewToEdit?.reviewImageUrl == null) "Upload Foto" else "Ganti Foto", color = Color.Black)
             }
             Spacer(modifier = Modifier.width(DIMENS_8dp))
             Button(
                 onClick = {
-                    val reviewToSubmit = editingReview?.copy(
-                        rating = rating,
-                        reviewText = reviewText,
-                        reviewImage = selectedImageUri
-                    ) ?: Review(
-                        id = (reviews.maxOfOrNull { it.id } ?: 0) + 1,
-                        username = "Pengguna",
-                        userProfilePic = R.drawable.profile_picture_placeholder,
-                        rating = rating,
-                        reviewText = reviewText,
-                        reviewImage = selectedImageUri
-                    )
-                    onReviewSubmitted(reviewToSubmit)
-                    context.showToastShort(if (editingReview == null) "Ulasan Terkirim!" else "Ulasan Diperbarui!")
-
-                    // Reset fields
-                    rating = 0
-                    reviewText = ""
-                    selectedImageUri = null
+                    if (rating > 0 && reviewText.isNotBlank()) {
+                        onReviewSubmitted(rating, reviewText, selectedImageUri)
+                    }
                 },
             ) {
-                Text(if (editingReview == null) "Kirim Ulasan" else "Update Ulasan", color = Color.Black)
+                Text(if (reviewToEdit == null) "Kirim Ulasan" else "Update", color = Color.Black)
+            }
+            
+            if (reviewToEdit != null) {
+                Spacer(modifier = Modifier.width(DIMENS_8dp))
+                OutlinedButton(onClick = onCancelEdit) {
+                    Text("Batal", color = Color.Black)
+                }
             }
         }
     }
 }
 
 @Composable
-fun ReviewItem(review: Review, onEdit: (Review) -> Unit, onDelete: (Review) -> Unit) {
+fun ReviewItem(
+    review: Review,
+    isOwner: Boolean = false,
+    onEditClick: () -> Unit = {},
+    onDeleteClick: () -> Unit = {}
+) {
     Row(modifier = Modifier.fillMaxWidth()) {
-        Image(
-            painter = painterResource(id = review.userProfilePic),
-            contentDescription = "User profile picture",
-            modifier = Modifier
-                .size(DIMENS_40dp)
-                .clip(CircleShape)
-        )
-        Spacer(modifier = Modifier.width(DIMENS_16dp)) // Increased padding
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = review.username,
-                fontFamily = GilroyFontFamily,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                fontSize = TEXT_SIZE_14sp
+        // User Profile Picture
+        if (review.userProfilePicUrl.isNullOrEmpty()) {
+            Image(
+                painter = painterResource(id = R.drawable.profile_picture_placeholder),
+                contentDescription = "User profile picture",
+                modifier = Modifier
+                    .size(DIMENS_40dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
             )
-            RatingBar(rating = review.rating.toDouble())
+        } else {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(review.userProfilePicUrl)
+                    .crossfade(true)
+                    .placeholder(R.drawable.profile_picture_placeholder)
+                    .error(R.drawable.profile_picture_placeholder)
+                    .build(),
+                contentDescription = "User profile picture",
+                modifier = Modifier
+                    .size(DIMENS_40dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        }
+        
+        Spacer(modifier = Modifier.width(DIMENS_16dp))
+        
+        Column(modifier = Modifier.weight(1f)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        text = review.username,
+                        fontFamily = GilroyFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black,
+                        fontSize = TEXT_SIZE_14sp
+                    )
+                    RatingBar(rating = review.rating.toDouble())
+                }
+                
+                if (isOwner) {
+                    Row {
+                        IconButton(onClick = onEditClick, modifier = Modifier.size(24.dp)) {
+                            Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Green)
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        IconButton(onClick = onDeleteClick, modifier = Modifier.size(24.dp)) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red)
+                        }
+                    }
+                }
+            }
+            
             Text(
                 text = review.reviewText,
                 fontFamily = GilroyFontFamily,
-                fontWeight = FontWeight.Medium, // Made it bolder
+                fontWeight = FontWeight.Medium,
                 color = Color.Black,
                 fontSize = TEXT_SIZE_12sp
             )
-            review.reviewImage?.let {
-                Image(
-                    painter = rememberAsyncImagePainter(it),
+            
+            // Review Image
+            review.reviewImageUrl?.let {
+                Spacer(modifier = Modifier.height(8.dp))
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(it)
+                        .crossfade(true)
+                        .build(),
                     contentDescription = "Review image",
                     modifier = Modifier
                         .fillMaxWidth()
@@ -492,12 +603,6 @@ fun ReviewItem(review: Review, onEdit: (Review) -> Unit, onDelete: (Review) -> U
                     contentScale = ContentScale.Crop
                 )
             }
-        }
-        IconButton(onClick = { onEdit(review) }) {
-            Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Color.Black)
-        }
-        IconButton(onClick = { onDelete(review) }) {
-            Icon(painterResource(id = R.drawable.ic_delete), contentDescription = "Delete", tint = Color.Black)
         }
     }
 }
@@ -537,7 +642,7 @@ fun DetailScreenImageHeaderPreview() {
             id = 1,
             title = "Organic Bananas",
             description = "Apples are nutritious. Apples may be good for weight loss. apples may be good for your heart. As part of a healtful and varied diet.",
-            image = R.drawable.product2,
+            image = null, // Set to null for preview
             unit = "7pcs, Priceg",
             price = 4.99,
             nutritions = "100gr",
@@ -555,17 +660,23 @@ fun DetailContentDescriptionPreview() {
             id = 1,
             title = "Organic Bananas",
             description = "Apples are nutritious. Apples may be good for weight loss. apples may be good for your heart. As part of a healtful and varied diet.",
-            image = R.drawable.product2,
+            image = null, // Set to null for preview
             unit = "7pcs, Priceg",
             price = 4.99,
             nutritions = "100gr",
             review = 4.0,
-            reviews = listOf(
-                Review(1, "John Doe", R.drawable.profile_picture_placeholder, 4, "Great product!"),
-                Review(2, "Jane Smith", R.drawable.profile_picture_placeholder, 5, "Amazing quality!")
-            ),
             category = "Buah & Sayur"
         ),
+        reviews = listOf(
+            Review(1, 101, "u1", "John Doe", null, 4, "Great product!"),
+            Review(2, 101, "u2", "Jane Smith", null, 5, "Amazing quality!")
+        ),
+        currentUserId = "u1",
+        reviewToEdit = null,
+        onEditReview = {},
+        onDeleteReview = {},
+        onCancelEdit = {},
+        onSubmitReview = { _, _, _ -> },
         onQuantityChange = {}
     )
 }

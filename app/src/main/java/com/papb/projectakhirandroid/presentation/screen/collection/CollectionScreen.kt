@@ -18,23 +18,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import coil.compose.rememberAsyncImagePainter
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.papb.projectakhirandroid.R
+import com.papb.projectakhirandroid.domain.model.CollectionItem
 import com.papb.projectakhirandroid.ui.theme.*
 
 @Composable
 fun CollectionScreen(
     navController: NavController
 ) {
-    // Attempt to get the back stack entry for the nested graph safely.
-    // We do this inside remember so it's not re-executed on every recomposition unless backstack changes.
-    // The try-catch is inside the calculation block, not around the composable function.
     val collectionGraphEntry = remember(navController.currentBackStackEntry) {
         try {
             navController.getBackStackEntry("collection_graph")
@@ -43,7 +43,6 @@ fun CollectionScreen(
         }
     }
 
-    // If entry exists, scope ViewModel to it. Otherwise scope to this screen (fallback).
     val viewModel: CollectionViewModel = if (collectionGraphEntry != null) {
         hiltViewModel(collectionGraphEntry)
     } else {
@@ -51,6 +50,7 @@ fun CollectionScreen(
     }
 
     val collections by viewModel.collections.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
     Scaffold(
         topBar = {
@@ -75,26 +75,35 @@ fun CollectionScreen(
             }
         }
     ) { padding ->
-        if (collections.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Koleksi Anda masih kosong.\nSilakan tambahkan koleksi baru.",
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.h6
-                )
-            }
-        } else {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier.padding(padding),
-                contentPadding = PaddingValues(8.dp)
-            ) {
-                items(collections) { collection ->
-                    CollectionCard(collection = collection, onDelete = { viewModel.deleteCollection(it) })
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+            if (collections.isEmpty() && !isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Koleksi Anda masih kosong.\nSilakan tambahkan koleksi baru.",
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.h6
+                    )
                 }
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(8.dp)
+                ) {
+                    items(collections) { collection ->
+                        CollectionCard(collection = collection, onDelete = { viewModel.deleteCollection(it) })
+                    }
+                }
+            }
+
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = Green
+                )
             }
         }
     }
@@ -112,18 +121,33 @@ fun CollectionCard(collection: CollectionItem, onDelete: (CollectionItem) -> Uni
     ) { 
         Box {
             Column {
-                Image(
-                    painter = rememberAsyncImagePainter(
-                        model = collection.imageUri,
-                        error = painterResource(id = R.drawable.profile_picture_placeholder) // Fallback image
-                    ),
-                    contentDescription = collection.name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .height(120.dp)
-                        .fillMaxWidth()
-                        .background(Color.LightGray)
-                )
+                if (collection.imageUrl.isNullOrEmpty()) {
+                    Image(
+                        painter = painterResource(id = R.drawable.profile_picture_placeholder), // Fallback
+                        contentDescription = collection.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .height(120.dp)
+                            .fillMaxWidth()
+                            .background(Color.LightGray)
+                    )
+                } else {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(collection.imageUrl)
+                            .crossfade(true)
+                            .placeholder(R.drawable.profile_picture_placeholder)
+                            .error(R.drawable.profile_picture_placeholder)
+                            .build(),
+                        contentDescription = collection.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .height(120.dp)
+                            .fillMaxWidth()
+                            .background(Color.LightGray)
+                    )
+                }
+                
                 Text(
                     text = collection.name,
                     modifier = Modifier.padding(8.dp),

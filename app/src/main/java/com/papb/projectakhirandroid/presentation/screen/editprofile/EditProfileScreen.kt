@@ -1,6 +1,8 @@
 package com.papb.projectakhirandroid.presentation.screen.editprofile
 
+import android.Manifest
 import android.net.Uri
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -23,6 +25,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import com.papb.projectakhirandroid.R
 import com.papb.projectakhirandroid.presentation.screen.about.ProfileViewModel
 import com.papb.projectakhirandroid.ui.theme.GilroyFontFamily
@@ -30,6 +35,7 @@ import com.papb.projectakhirandroid.ui.theme.Green
 import com.papb.projectakhirandroid.ui.theme.TEXT_SIZE_18sp
 import com.papb.projectakhirandroid.utils.showToastShort
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun EditProfileScreen(
     navController: NavController,
@@ -45,9 +51,18 @@ fun EditProfileScreen(
 
     val context = LocalContext.current
 
-    val launcher = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri? ->
+    // 1. Launcher untuk membuka galeri (GetContent)
+    val imagePickerLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri? ->
         imageUri = uri
     }
+
+    // 2. State dan Launcher untuk Izin (Permission)
+    val permissionToRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Manifest.permission.READ_MEDIA_IMAGES
+    } else {
+        Manifest.permission.READ_EXTERNAL_STORAGE
+    }
+    val permissionState = rememberPermissionState(permission = permissionToRequest)
 
     Column(
         modifier = Modifier
@@ -59,8 +74,15 @@ fun EditProfileScreen(
             modifier = Modifier
                 .size(120.dp)
                 .clip(CircleShape)
-                .background(Color.LightGray) // Keep background for better visibility
-                .clickable { launcher.launch("image/*") },
+                .background(Color.LightGray)
+                .clickable { 
+                    // 3. Logika Pengecekan Izin saat gambar di-klik
+                    if (permissionState.status.isGranted) {
+                        imagePickerLauncher.launch("image/*")
+                    } else {
+                        permissionState.launchPermissionRequest()
+                    }
+                 },
             contentAlignment = Alignment.Center
         ) {
             val imagePainter = rememberAsyncImagePainter(
@@ -72,7 +94,7 @@ fun EditProfileScreen(
                 painter = imagePainter,
                 contentDescription = "Profile Picture",
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop // Reverted to Crop to fill the circle
+                contentScale = ContentScale.Crop
             )
         }
 

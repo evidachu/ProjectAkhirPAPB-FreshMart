@@ -2,30 +2,56 @@ package com.papb.projectakhirandroid.presentation.screen.collection
 
 import android.net.Uri
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.papb.projectakhirandroid.data.repository.CollectionRepository
+import com.papb.projectakhirandroid.domain.model.CollectionItem
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-
-// Move data class here or to a dedicated model file
-data class CollectionItem(val id: Long, val name: String, val imageUri: Uri?)
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
-class CollectionViewModel @Inject constructor() : ViewModel() {
+class CollectionViewModel @Inject constructor(
+    private val repository: CollectionRepository
+) : ViewModel() {
 
     private val _collections = MutableStateFlow<List<CollectionItem>>(emptyList())
     val collections = _collections.asStateFlow()
 
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading = _isLoading.asStateFlow()
+
+    init {
+        loadCollections()
+    }
+
+    fun loadCollections() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _collections.value = repository.getCollections()
+            _isLoading.value = false
+        }
+    }
+
     fun addCollection(name: String, imageUri: Uri?) {
-        val newItem = CollectionItem(
-            id = System.currentTimeMillis(), // Simple unique ID
-            name = name,
-            imageUri = imageUri
-        )
-        _collections.value = _collections.value + newItem
+        viewModelScope.launch {
+            _isLoading.value = true
+            val success = repository.addCollection(name, imageUri)
+            if (success) {
+                loadCollections()
+            }
+            _isLoading.value = false
+        }
     }
 
     fun deleteCollection(item: CollectionItem) {
-        _collections.value = _collections.value - item
+        viewModelScope.launch {
+            val success = repository.deleteCollection(item.id)
+            if (success) {
+                // Optimistic update or reload
+                _collections.value = _collections.value.filter { it.id != item.id }
+            }
+        }
     }
 }
