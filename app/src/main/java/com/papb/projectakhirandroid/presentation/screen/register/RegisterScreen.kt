@@ -28,6 +28,7 @@ fun RegisterScreen(
     navController: NavController,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
+    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -90,6 +91,16 @@ fun RegisterScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Nama Lengkap") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = textFieldColors(),
+                    enabled = !uiState.isLoading
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
                     label = { Text("Alamat Email") },
@@ -113,7 +124,7 @@ fun RegisterScreen(
 
                 Box(contentAlignment = Alignment.Center) {
                     Button(
-                        onClick = { viewModel.register(email, password) },
+                        onClick = { viewModel.register(name, email, password) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),

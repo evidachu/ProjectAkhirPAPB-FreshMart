@@ -85,6 +85,10 @@ class ProfileViewModel @Inject constructor(
 
     fun logout() {
         viewModelScope.launch {
+            // Hapus data lokal (cache) user sebelumnya
+            userRepository.clearLocalData()
+            
+            // Logout dari Supabase
             authRepository.logout()
         }
     }

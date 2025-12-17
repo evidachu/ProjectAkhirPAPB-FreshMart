@@ -62,6 +62,15 @@ class UserRepository @Inject constructor(
         }
     }
 
+    // --- Clear Data Local (PENTING untuk Logout) ---
+    suspend fun clearLocalData() {
+        context.dataStore.edit { preferences ->
+            preferences.remove(PreferencesKeys.NAME)
+            preferences.remove(PreferencesKeys.EMAIL)
+            preferences.remove(PreferencesKeys.PROFILE_IMAGE_URI)
+        }
+    }
+
     // --- Supabase Cloud Functions ---
 
     // 1. Dapatkan ID User yang sedang login
@@ -143,6 +152,9 @@ class UserRepository @Inject constructor(
                 saveName(userProfile.fullName)
                 saveEmail(userProfile.email)
                 saveProfileImageUri(userProfile.avatarUrl)
+            } else {
+                // Jika user baru dan belum punya profil di database, pastikan lokal bersih
+                // (Optional: Bisa set default value jika perlu)
             }
         } catch (e: Exception) {
             e.printStackTrace()

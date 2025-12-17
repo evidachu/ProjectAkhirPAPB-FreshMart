@@ -69,10 +69,10 @@ class AuthViewModel @Inject constructor(
     /**
      * Fungsi untuk melakukan registrasi.
      */
-    fun register(email: String, password: String) {
+    fun register(name: String, email: String, password: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-            val result = authRepository.register(email, password)
+            val result = authRepository.register(name, email, password)
             if (result.isSuccess) {
                 _uiState.update { it.copy(isLoading = false) }
             } else {

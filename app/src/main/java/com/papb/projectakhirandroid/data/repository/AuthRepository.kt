@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -47,13 +49,17 @@ class AuthRepository @Inject constructor(
     }
 
     /**
-     * Melakukan registrasi user baru dengan email dan password.
+     * Melakukan registrasi user baru dengan nama, email dan password.
      */
-    suspend fun register(email: String, password: String): Result<Unit> {
+    suspend fun register(name: String, email: String, password: String): Result<Unit> {
         return try {
             authClient.signUpWith(Email) {
                 this.email = email
                 this.password = password
+                // Kirim metadata user (nama) ke Auth Supabase
+                data = buildJsonObject {
+                    put("full_name", name)
+                }
             }
             Result.success(Unit)
         } catch (e: Exception) {
