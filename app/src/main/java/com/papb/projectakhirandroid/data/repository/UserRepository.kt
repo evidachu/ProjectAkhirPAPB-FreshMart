@@ -6,16 +6,12 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.papb.projectakhirandroid.data.dataStore
 import com.papb.projectakhirandroid.domain.model.UserProfile
-import com.papb.projectakhirandroid.utils.ImageUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.postgrest
-import io.github.jan.supabase.storage.storage
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class UserRepository @Inject constructor(
@@ -69,27 +65,7 @@ class UserRepository @Inject constructor(
         return supabaseClient.auth.currentSessionOrNull()?.user?.id
     }
 
-    // 2. Upload Gambar ke Storage
-    suspend fun uploadProfileImage(uri: Uri): String? {
-        return withContext(Dispatchers.IO) {
-            try {
-                // Gunakan ImageUtils untuk kompresi dan konversi ke ByteArray
-                val byteArray = ImageUtils.uriToByteArray(context, uri) ?: return@withContext null
-
-                val userId = getCurrentUserId() ?: "unknown"
-                val fileName = "${userId}_${System.currentTimeMillis()}.jpg"
-                val bucket = supabaseClient.storage.from("avatars")
-
-                bucket.upload(fileName, byteArray, upsert = true)
-                bucket.publicUrl(fileName)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
-        }
-    }
-
-    // 3. Simpan Profil ke Database Supabase
+    // 2. Simpan Profil ke Database Supabase
     suspend fun upsertUserProfileToSupabase(name: String, email: String, avatarUrl: String?) {
         val userId = getCurrentUserId()
         if (userId != null) {
@@ -111,7 +87,7 @@ class UserRepository @Inject constructor(
         }
     }
 
-    // 4. Ambil Profil dari Supabase
+    // 3. Ambil Profil dari Supabase
     suspend fun fetchUserProfileFromSupabase() {
         val userId = getCurrentUserId() ?: return
         try {

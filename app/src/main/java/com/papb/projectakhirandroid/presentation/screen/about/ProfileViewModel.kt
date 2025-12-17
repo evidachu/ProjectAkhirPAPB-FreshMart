@@ -50,38 +50,19 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun saveProfile(name: String, email: String, imageUri: Uri?) {
+    fun saveProfile(name: String, email: String) {
         viewModelScope.launch {
             // 1. Simpan ke DataStore Lokal dulu (Agar UI cepat update)
             userRepository.saveName(name)
             userRepository.saveEmail(email)
             
-            var finalImageUrl: String? = null
-
-            if (imageUri != null) {
-                // Cek apakah imageUri adalah file lokal (content:// atau file://) yang perlu diupload
-                if (imageUri.scheme == "content" || imageUri.scheme == "file") {
-                    // Upload gambar ke Supabase Storage
-                    val uploadedUrl = userRepository.uploadProfileImage(imageUri)
-                    if (uploadedUrl != null) {
-                        // Simpan URL publik hasil upload ke lokal
-                        userRepository.saveProfileImageUri(uploadedUrl)
-                        finalImageUrl = uploadedUrl
-                    }
-                } else {
-                    // Jika skema http/https, berarti sudah berupa URL, simpan langsung
-                    val urlString = imageUri.toString()
-                    userRepository.saveProfileImageUri(urlString)
-                    finalImageUrl = urlString
-                }
-            } else {
-                userRepository.saveProfileImageUri(null)
-                finalImageUrl = null
-            }
+            // Image upload has been removed, so we only handle name and email
+            // We use the existing profileImageUri if it exists in DataStore/State
+            val currentImageUriString = _profileImageUri.value?.toString()
 
             // 2. Simpan ke Database Supabase (Cloud)
-            // Kita kirim data final (Nama, Email, dan URL Gambar yang valid) ke tabel profiles
-            userRepository.upsertUserProfileToSupabase(name, email, finalImageUrl)
+            // Kita kirim data final (Nama, Email, dan URL Gambar yg sudah ada) ke tabel profiles
+            userRepository.upsertUserProfileToSupabase(name, email, currentImageUriString)
         }
     }
 

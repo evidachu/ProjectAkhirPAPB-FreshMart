@@ -2,6 +2,7 @@ package com.papb.projectakhirandroid.presentation.screen.detail
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -32,7 +33,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.papb.projectakhirandroid.R
 import com.papb.projectakhirandroid.domain.model.ProductItem
@@ -40,7 +40,10 @@ import com.papb.projectakhirandroid.domain.model.Review
 import com.papb.projectakhirandroid.presentation.common.SpacerDividerContent
 import com.papb.projectakhirandroid.presentation.component.RatingBar
 import com.papb.projectakhirandroid.ui.theme.*
+import com.papb.projectakhirandroid.utils.ImageUtils
 import com.papb.projectakhirandroid.utils.showToastShort
+import kotlinx.coroutines.launch
+import java.io.File
 import java.text.DecimalFormat
 
 @Composable
@@ -49,6 +52,7 @@ fun DetailScreen(
     detailViewModel: DetailViewModel = hiltViewModel(),
 ) {
     val mContext = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val selectedProduct by detailViewModel.selectedProduct.collectAsState()
     val reviews by detailViewModel.reviews.collectAsState()
     val isLoading by detailViewModel.isLoading.collectAsState()
@@ -79,9 +83,9 @@ fun DetailScreen(
                             onEditReview = { reviewToEdit = it },
                             onDeleteReview = { detailViewModel.deleteReview(it) },
                             onCancelEdit = { reviewToEdit = null },
-                            onSubmitReview = { rating, text, image ->
+                            onSubmitReview = { rating, text, imageFile ->
                                 if (reviewToEdit == null) {
-                                    detailViewModel.submitReview(productItem.id, rating, text, image)
+                                    detailViewModel.submitReview(productItem.id, rating, text, imageFile)
                                     mContext.showToastShort("Ulasan Terkirim!")
                                 } else {
                                     detailViewModel.updateReview(
@@ -89,8 +93,8 @@ fun DetailScreen(
                                         productId = productItem.id,
                                         rating = rating,
                                         reviewText = text,
-                                        imageUri = image,
-                                        existingImageUrl = reviewToEdit!!.reviewImageUrl
+                                        existingImageUrl = reviewToEdit!!.reviewImageUrl,
+                                        newImageFile = imageFile
                                     )
                                     mContext.showToastShort("Ulasan Diperbarui!")
                                     reviewToEdit = null
@@ -166,7 +170,7 @@ fun DetailContentDescription(
     onEditReview: (Review) -> Unit,
     onDeleteReview: (Review) -> Unit,
     onCancelEdit: () -> Unit,
-    onSubmitReview: (Int, String, Uri?) -> Unit,
+    onSubmitReview: (Int, String, File?) -> Unit,
     onQuantityChange: (Int) -> Unit
 ) {
     var quantity by remember { mutableStateOf(1) }
@@ -403,31 +407,48 @@ fun DetailContentDescription(
 @Composable
 fun CustomerReviewSection(
     reviewToEdit: Review?,
-    onReviewSubmitted: (Int, String, Uri?) -> Unit,
+    onReviewSubmitted: (Int, String, File?) -> Unit,
     onCancelEdit: () -> Unit
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     var rating by remember { mutableStateOf(0) }
     var reviewText by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var selectedImageFile by remember { mutableStateOf<File?>(null) }
+
+    // Menggunakan Photo Picker modern (PickVisualMedia) yang lebih stabil
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            selectedImageUri = uri
+            coroutineScope.launch {
+                // Memproses file di background thread
+                val file = ImageUtils.uriToTempFile(context, uri)
+                selectedImageFile = file
+                
+                if (file == null) {
+                    context.showToastShort("Gagal memproses gambar. Coba gambar lain.")
+                }
+            }
+        }
+    }
     
     // Use LaunchedEffect to update state when reviewToEdit changes
     LaunchedEffect(reviewToEdit) {
         if (reviewToEdit != null) {
             rating = reviewToEdit.rating
             reviewText = reviewToEdit.reviewText
-            selectedImageUri = null // Reset new image selection, existing image is handled by ViewModel/Repo if not replaced
+            selectedImageUri = null
+            selectedImageFile = null
         } else {
             // Reset if null (cancelled or finished)
             rating = 0
             reviewText = ""
             selectedImageUri = null
+            selectedImageFile = null
         }
-    }
-
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        selectedImageUri = uri
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -463,18 +484,25 @@ fun CustomerReviewSection(
 
         Spacer(modifier = Modifier.height(DIMENS_16dp))
 
+        // Tampilkan gambar yang sudah dipilih (baru)
         if (selectedImageUri != null) {
-            Image(
-                painter = rememberAsyncImagePainter(selectedImageUri),
-                contentDescription = "Selected image preview",
+            AsyncImage(
+                model = selectedImageUri,
+                contentDescription = "Selected Image",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(1f)
+                    .height(200.dp)
                     .clip(RoundedCornerShape(DIMENS_8dp)),
                 contentScale = ContentScale.Crop
             )
+            TextButton(onClick = { 
+                selectedImageUri = null
+                selectedImageFile = null
+            }) {
+                Text("Hapus Gambar", color = Color.Red)
+            }
         } else if (reviewToEdit?.reviewImageUrl != null) {
-             // Show existing image if editing and no new image selected
+             // Tampilkan gambar existing jika sedang edit dan belum pilih gambar baru
              AsyncImage(
                 model = reviewToEdit.reviewImageUrl,
                 contentDescription = "Existing review image",
@@ -489,14 +517,31 @@ fun CustomerReviewSection(
         Spacer(modifier = Modifier.height(DIMENS_8dp))
 
         Row {
-            Button(onClick = { launcher.launch("image/*") }) {
-                Text(if (selectedImageUri == null && reviewToEdit?.reviewImageUrl == null) "Upload Foto" else "Ganti Foto", color = Color.Black)
+            OutlinedButton(
+                onClick = { 
+                    // Membuka Photo Picker hanya untuk gambar
+                    launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                }
+            ) {
+                Text(text = if (selectedImageUri == null) "Upload Foto" else "Ganti Foto", color = Color.Black)
             }
+
             Spacer(modifier = Modifier.width(DIMENS_8dp))
+            
             Button(
                 onClick = {
                     if (rating > 0 && reviewText.isNotBlank()) {
-                        onReviewSubmitted(rating, reviewText, selectedImageUri)
+                        onReviewSubmitted(rating, reviewText, selectedImageFile)
+                        // Reset form if creating new
+                        if (reviewToEdit == null) {
+                            rating = 0
+                            reviewText = ""
+                            selectedImageUri = null
+                            selectedImageFile = null
+                        }
+                    } else {
+                         if (rating == 0) context.showToastShort("Mohon beri rating bintang")
+                         else if (reviewText.isBlank()) context.showToastShort("Mohon isi ulasan")
                     }
                 },
             ) {
@@ -587,7 +632,7 @@ fun ReviewItem(
                 fontSize = TEXT_SIZE_12sp
             )
             
-            // Review Image
+            // Review Image (Read Only)
             review.reviewImageUrl?.let {
                 Spacer(modifier = Modifier.height(8.dp))
                 AsyncImage(

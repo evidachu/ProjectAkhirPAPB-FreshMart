@@ -4,43 +4,60 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import java.io.ByteArrayOutputStream
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
 
 object ImageUtils {
 
-    fun uriToByteArray(context: Context, uri: Uri): ByteArray? {
-        return try {
-            val contentResolver = context.contentResolver
-            
-            // 1. Decode bounds only to get dimensions
-            val options = BitmapFactory.Options()
-            options.inJustDecodeBounds = true
-            var inputStream = contentResolver.openInputStream(uri)
-            BitmapFactory.decodeStream(inputStream, null, options)
-            inputStream?.close()
+    /**
+     * Reads a Uri, resizes it, compresses it, and saves it to a temporary file.
+     * Returns the File object or null if failed.
+     * Runs on Dispatchers.IO to prevent blocking the Main Thread.
+     */
+    suspend fun uriToTempFile(context: Context, uri: Uri): File? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val contentResolver = context.contentResolver
 
-            // 2. Calculate inSampleSize to resize image
-            options.inSampleSize = calculateInSampleSize(options, 1024, 1024) // Max 1024x1024
-            options.inJustDecodeBounds = false
+                // 1. Decode bounds only to get dimensions (Lightweight)
+                val options = BitmapFactory.Options()
+                options.inJustDecodeBounds = true
+                var inputStream = contentResolver.openInputStream(uri)
+                BitmapFactory.decodeStream(inputStream, null, options)
+                inputStream?.close()
 
-            // 3. Decode full image with scaling
-            inputStream = contentResolver.openInputStream(uri)
-            val bitmap = BitmapFactory.decodeStream(inputStream, null, options)
-            inputStream?.close()
+                // 2. Calculate inSampleSize to resize image (Target ~1024px max)
+                options.inSampleSize = calculateInSampleSize(options, 1024, 1024)
+                options.inJustDecodeBounds = false
 
-            if (bitmap == null) return null
+                // 3. Decode full image with scaling (Memory safe)
+                inputStream = contentResolver.openInputStream(uri)
+                val bitmap = BitmapFactory.decodeStream(inputStream, null, options)
+                inputStream?.close()
 
-            // 4. Compress to JPEG
-            val outputStream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream) // Quality 70%
-            val byteArray = outputStream.toByteArray()
-            
-            bitmap.recycle()
-            
-            byteArray
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+                if (bitmap == null) return@withContext null
+
+                // 4. Create a temporary file in the cache directory
+                val cacheDir = context.cacheDir
+                val tempFile = File.createTempFile("upload_", ".jpg", cacheDir)
+                val outputStream = FileOutputStream(tempFile)
+
+                // 5. Compress to JPEG (Quality 60 is usually good enough for web)
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 60, outputStream)
+                outputStream.flush()
+                outputStream.close()
+
+                // 6. Recycle bitmap to free memory immediately
+                bitmap.recycle()
+
+                tempFile
+            } catch (t: Throwable) {
+                // Catch OutOfMemoryError and other exceptions
+                t.printStackTrace()
+                null
+            }
         }
     }
 

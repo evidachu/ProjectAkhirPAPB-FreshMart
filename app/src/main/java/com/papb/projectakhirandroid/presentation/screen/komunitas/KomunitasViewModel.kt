@@ -1,6 +1,5 @@
 package com.papb.projectakhirandroid.presentation.screen.komunitas
 
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.papb.projectakhirandroid.data.repository.CommunityRepository
@@ -49,8 +48,7 @@ class KomunitasViewModel @Inject constructor(
     fun createPost(
         title: String,
         description: String,
-        type: String,
-        imageUri: Uri?
+        type: String
     ) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -62,7 +60,6 @@ class KomunitasViewModel @Inject constructor(
                 title = title,
                 description = description,
                 type = type,
-                imageUri = imageUri,
                 ownerName = currentUserName
             )
 
@@ -81,7 +78,6 @@ class KomunitasViewModel @Inject constructor(
         id: Long,
         title: String,
         description: String,
-        imageUri: Uri?,
         existingImageUrl: String?
     ) {
         viewModelScope.launch {
@@ -91,7 +87,6 @@ class KomunitasViewModel @Inject constructor(
                 id = id,
                 title = title,
                 description = description,
-                imageUri = imageUri,
                 existingImageUrl = existingImageUrl
             )
 

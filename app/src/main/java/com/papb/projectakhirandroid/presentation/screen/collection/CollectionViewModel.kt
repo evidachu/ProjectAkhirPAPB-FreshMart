@@ -1,6 +1,5 @@
 package com.papb.projectakhirandroid.presentation.screen.collection
 
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.papb.projectakhirandroid.data.repository.CollectionRepository
@@ -34,10 +33,10 @@ class CollectionViewModel @Inject constructor(
         }
     }
 
-    fun addCollection(name: String, imageUri: Uri?) {
+    fun addCollection(name: String) {
         viewModelScope.launch {
             _isLoading.value = true
-            val success = repository.addCollection(name, imageUri)
+            val success = repository.addCollection(name)
             if (success) {
                 loadCollections()
             }

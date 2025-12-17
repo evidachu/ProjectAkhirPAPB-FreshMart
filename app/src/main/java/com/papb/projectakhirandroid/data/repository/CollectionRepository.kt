@@ -3,14 +3,11 @@
 package com.papb.projectakhirandroid.data.repository
 
 import android.content.Context
-import android.net.Uri
 import com.papb.projectakhirandroid.domain.model.CollectionItem
-import com.papb.projectakhirandroid.utils.ImageUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.postgrest
-import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
@@ -55,19 +52,14 @@ class CollectionRepository @Inject constructor(
     }
 
     // 2. Add Collection (Create)
-    suspend fun addCollection(name: String, imageUri: Uri?): Boolean {
+    suspend fun addCollection(name: String): Boolean {
         return withContext(Dispatchers.IO) {
             try {
                 val userId = supabaseClient.auth.currentSessionOrNull()?.user?.id
-                var imageUrl: String? = null
-
-                if (imageUri != null) {
-                    imageUrl = uploadCollectionImage(imageUri)
-                }
 
                 val newCollection = CreateCollectionDto(
                     name = name,
-                    imageUrl = imageUrl,
+                    imageUrl = null, // No image upload
                     ownerId = userId
                 )
 
@@ -81,15 +73,10 @@ class CollectionRepository @Inject constructor(
     }
     
     // 3. Update Collection (Update)
-    suspend fun updateCollection(id: Long, name: String, imageUri: Uri?, existingImageUrl: String?): Boolean {
+    suspend fun updateCollection(id: Long, name: String, existingImageUrl: String?): Boolean {
         return withContext(Dispatchers.IO) {
             try {
-                var finalImageUrl = existingImageUrl
-                if (imageUri != null) {
-                    finalImageUrl = uploadCollectionImage(imageUri)
-                }
-
-                val updateDto = UpdateCollectionDto(name = name, imageUrl = finalImageUrl)
+                val updateDto = UpdateCollectionDto(name = name, imageUrl = existingImageUrl)
 
                 supabaseClient.postgrest.from("collections").update(updateDto) {
                     filter { eq("id", id) }
@@ -116,23 +103,6 @@ class CollectionRepository @Inject constructor(
                 e.printStackTrace()
                 false
             }
-        }
-    }
-
-    private suspend fun uploadCollectionImage(uri: Uri): String? {
-        return try {
-            // Use ImageUtils to compress and convert to ByteArray
-            val byteArray = ImageUtils.uriToByteArray(context, uri) ?: return null
-
-            val userId = supabaseClient.auth.currentSessionOrNull()?.user?.id ?: "anon"
-            val fileName = "collection_${userId}_${System.currentTimeMillis()}.jpg"
-            val bucket = supabaseClient.storage.from("collections")
-
-            bucket.upload(fileName, byteArray, upsert = true)
-            bucket.publicUrl(fileName)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
         }
     }
 }

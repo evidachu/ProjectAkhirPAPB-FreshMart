@@ -15,17 +15,23 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.annotations.SupabaseInternal
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.gotrue.Auth
 import io.github.jan.supabase.gotrue.FlowType
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.storage.Storage
+import io.github.jan.supabase.realtime.Realtime
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpTimeout
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
 
+    @OptIn(SupabaseInternal::class)
     @Provides
     @Singleton
     fun provideSupabaseClient(
@@ -35,6 +41,18 @@ object RepositoryModule {
             supabaseUrl = SupabaseClientProvider.SUPABASE_URL,
             supabaseKey = SupabaseClientProvider.SUPABASE_ANON_KEY
         ) {
+            // Menggunakan engine CIO yang lebih stabil untuk upload file
+            httpEngine = CIO.create()
+
+            // Mengatur timeout lebih lama (60 detik)
+            httpConfig {
+                install(HttpTimeout) {
+                    requestTimeoutMillis = 60000
+                    connectTimeoutMillis = 60000
+                    socketTimeoutMillis = 60000
+                }
+            }
+
             install(Auth) {
                 // Konfigurasi session persistence agar login tetap tersimpan
                 // menggunakan SharedPreferences
@@ -46,6 +64,8 @@ object RepositoryModule {
                 alwaysAutoRefresh = true
             }
             install(Postgrest)
+            install(Storage) // Install Plugin Storage! (Penyebab error sebelumnya)
+            install(Realtime)
         }
     }
 

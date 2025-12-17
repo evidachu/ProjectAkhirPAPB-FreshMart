@@ -1,6 +1,5 @@
 package com.papb.projectakhirandroid.presentation.screen.detail
 
-import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -35,7 +35,7 @@ class DetailViewModel @Inject constructor(
     val reviews: StateFlow<List<Review>> = _reviews.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+    val isLoading: StateFlow<Boolean> = _isLoading
 
     private val _currentUserId = MutableStateFlow<String?>(null)
     val currentUserId: StateFlow<String?> = _currentUserId.asStateFlow()
@@ -68,7 +68,7 @@ class DetailViewModel @Inject constructor(
         }
     }
 
-    fun submitReview(productId: Int, rating: Int, reviewText: String, imageUri: Uri?) {
+    fun submitReview(productId: Int, rating: Int, reviewText: String, imageFile: File?) {
         viewModelScope.launch {
             _isLoading.value = true
             val username = userRepository.getName().first()
@@ -78,9 +78,9 @@ class DetailViewModel @Inject constructor(
                 productId = productId,
                 rating = rating,
                 reviewText = reviewText,
-                imageUri = imageUri,
                 username = username,
-                userProfilePicUrl = profilePicUrl
+                userProfilePicUrl = profilePicUrl,
+                imageFile = imageFile
             )
 
             if (success) {
@@ -90,7 +90,7 @@ class DetailViewModel @Inject constructor(
         }
     }
 
-    fun updateReview(reviewId: Long, productId: Int, rating: Int, reviewText: String, imageUri: Uri?, existingImageUrl: String?) {
+    fun updateReview(reviewId: Long, productId: Int, rating: Int, reviewText: String, existingImageUrl: String?, newImageFile: File?) {
         viewModelScope.launch {
             _isLoading.value = true
             val success = reviewRepository.updateReview(
@@ -98,8 +98,8 @@ class DetailViewModel @Inject constructor(
                 productId = productId,
                 rating = rating,
                 reviewText = reviewText,
-                imageUri = imageUri,
-                existingImageUrl = existingImageUrl
+                existingImageUrl = existingImageUrl,
+                newImageFile = newImageFile
             )
 
             if (success) {

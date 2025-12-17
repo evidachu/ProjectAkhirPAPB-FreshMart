@@ -1,9 +1,8 @@
 package com.papb.projectakhirandroid.data.repository
 
 import android.content.Context
-import android.net.Uri
+import android.util.Log
 import com.papb.projectakhirandroid.domain.model.Review
-import com.papb.projectakhirandroid.utils.ImageUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
@@ -11,6 +10,7 @@ import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 import javax.inject.Inject
 
 class ReviewRepository @Inject constructor(
@@ -26,9 +26,28 @@ class ReviewRepository @Inject constructor(
                     .select { filter { eq("product_id", productId) } }
                     .decodeList<Review>()
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("ReviewRepository", "Error getting reviews", e)
                 emptyList()
             }
+        }
+    }
+
+    // Helper: Upload Image to Storage
+    private suspend fun uploadReviewImage(file: File): String? {
+        return try {
+            val fileName = "review_${System.currentTimeMillis()}.jpg"
+            val bucket = supabaseClient.storage.from("reviews")
+            
+            // Upload file
+            bucket.upload(fileName, file.readBytes())
+            
+            // Get public URL
+            val publicUrl = bucket.publicUrl(fileName)
+            Log.d("ReviewRepository", "Upload success: $publicUrl")
+            publicUrl
+        } catch (e: Exception) {
+            Log.e("ReviewRepository", "Upload failed image", e)
+            null
         }
     }
 
@@ -37,18 +56,16 @@ class ReviewRepository @Inject constructor(
         productId: Int,
         rating: Int,
         reviewText: String,
-        imageUri: Uri?,
         username: String,
-        userProfilePicUrl: String?
+        userProfilePicUrl: String?,
+        imageFile: File?
     ): Boolean {
         return withContext(Dispatchers.IO) {
             try {
                 val userId = supabaseClient.auth.currentSessionOrNull()?.user?.id ?: return@withContext false
-                var reviewImageUrl: String? = null
 
-                if (imageUri != null) {
-                    reviewImageUrl = uploadReviewImage(imageUri, userId, productId)
-                }
+                // Upload image if exists
+                val imageUrl = if (imageFile != null) uploadReviewImage(imageFile) else null
 
                 val newReview = Review(
                     productId = productId,
@@ -57,13 +74,13 @@ class ReviewRepository @Inject constructor(
                     userProfilePicUrl = userProfilePicUrl,
                     rating = rating,
                     reviewText = reviewText,
-                    reviewImageUrl = reviewImageUrl
+                    reviewImageUrl = imageUrl
                 )
 
                 supabaseClient.postgrest.from("reviews").insert(newReview)
                 true
             } catch (e: Throwable) {
-                e.printStackTrace()
+                Log.e("ReviewRepository", "Error adding review", e)
                 false
             }
         }
@@ -75,16 +92,16 @@ class ReviewRepository @Inject constructor(
         productId: Int,
         rating: Int,
         reviewText: String,
-        imageUri: Uri?,
-        existingImageUrl: String?
+        existingImageUrl: String?,
+        newImageFile: File?
     ): Boolean {
         return withContext(Dispatchers.IO) {
             try {
-                val userId = supabaseClient.auth.currentSessionOrNull()?.user?.id ?: return@withContext false
-                var finalImageUrl = existingImageUrl
-
-                if (imageUri != null) {
-                    finalImageUrl = uploadReviewImage(imageUri, userId, productId)
+                // Determine the final image URL
+                val finalImageUrl = if (newImageFile != null) {
+                    uploadReviewImage(newImageFile)
+                } else {
+                    existingImageUrl
                 }
 
                 val updateData = mapOf(
@@ -98,7 +115,7 @@ class ReviewRepository @Inject constructor(
                 }
                 true
             } catch (e: Throwable) {
-                e.printStackTrace()
+                Log.e("ReviewRepository", "Error updating review", e)
                 false
             }
         }
@@ -113,27 +130,9 @@ class ReviewRepository @Inject constructor(
                 }
                 true
             } catch (e: Throwable) {
-                e.printStackTrace()
+                Log.e("ReviewRepository", "Error deleting review", e)
                 false
             }
-        }
-    }
-
-    // Helper: Upload Image to Storage bucket 'reviews'
-    private suspend fun uploadReviewImage(uri: Uri, userId: String, productId: Int): String? {
-        return try {
-            // Gunakan ImageUtils untuk kompresi dan konversi ke ByteArray
-            val byteArray = ImageUtils.uriToByteArray(context, uri) ?: return null
-
-            // Nama file unik: reviews/{productId}/{userId}_{timestamp}.jpg
-            val fileName = "reviews/$productId/${userId}_${System.currentTimeMillis()}.jpg"
-            val bucket = supabaseClient.storage.from("reviews") // Pastikan bucket 'reviews' ada
-
-            bucket.upload(fileName, byteArray, upsert = true)
-            bucket.publicUrl(fileName)
-        } catch (e: Throwable) {
-            e.printStackTrace()
-            null
         }
     }
 }

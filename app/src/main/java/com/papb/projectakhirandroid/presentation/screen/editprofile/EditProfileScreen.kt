@@ -1,13 +1,7 @@
 package com.papb.projectakhirandroid.presentation.screen.editprofile
 
-import android.Manifest
-import android.net.Uri
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
@@ -25,9 +19,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
 import com.papb.projectakhirandroid.R
 import com.papb.projectakhirandroid.presentation.screen.about.ProfileViewModel
 import com.papb.projectakhirandroid.ui.theme.GilroyFontFamily
@@ -35,7 +26,6 @@ import com.papb.projectakhirandroid.ui.theme.Green
 import com.papb.projectakhirandroid.ui.theme.TEXT_SIZE_18sp
 import com.papb.projectakhirandroid.utils.showToastShort
 
-@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun EditProfileScreen(
     navController: NavController,
@@ -47,22 +37,11 @@ fun EditProfileScreen(
 
     var name by remember(initialName) { mutableStateOf(initialName) }
     var email by remember(initialEmail) { mutableStateOf(initialEmail) }
-    var imageUri by remember(initialImageUri) { mutableStateOf(initialImageUri) }
+    
+    // Kita masih menampilkan gambar profil saat ini, tapi tidak bisa diklik untuk diubah
+    val imageUri by remember(initialImageUri) { mutableStateOf(initialImageUri) }
 
     val context = LocalContext.current
-
-    // 1. Launcher untuk membuka galeri (GetContent)
-    val imagePickerLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri? ->
-        imageUri = uri
-    }
-
-    // 2. State dan Launcher untuk Izin (Permission)
-    val permissionToRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        Manifest.permission.READ_MEDIA_IMAGES
-    } else {
-        Manifest.permission.READ_EXTERNAL_STORAGE
-    }
-    val permissionState = rememberPermissionState(permission = permissionToRequest)
 
     Column(
         modifier = Modifier
@@ -74,15 +53,7 @@ fun EditProfileScreen(
             modifier = Modifier
                 .size(120.dp)
                 .clip(CircleShape)
-                .background(Color.LightGray)
-                .clickable { 
-                    // 3. Logika Pengecekan Izin saat gambar di-klik
-                    if (permissionState.status.isGranted) {
-                        imagePickerLauncher.launch("image/*")
-                    } else {
-                        permissionState.launchPermissionRequest()
-                    }
-                 },
+                .background(Color.LightGray),
             contentAlignment = Alignment.Center
         ) {
             val imagePainter = rememberAsyncImagePainter(
@@ -131,7 +102,7 @@ fun EditProfileScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = {
-            profileViewModel.saveProfile(name, email, imageUri)
+            profileViewModel.saveProfile(name, email)
             context.showToastShort("Profil berhasil diperbarui")
             navController.popBackStack()
         }) {

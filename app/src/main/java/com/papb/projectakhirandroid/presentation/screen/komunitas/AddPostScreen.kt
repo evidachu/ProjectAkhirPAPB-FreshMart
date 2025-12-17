@@ -1,39 +1,24 @@
 package com.papb.projectakhirandroid.presentation.screen.komunitas
 
-import android.Manifest
-import android.net.Uri
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Image
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import coil.compose.rememberAsyncImagePainter
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
 import com.papb.projectakhirandroid.ui.theme.*
 import com.papb.projectakhirandroid.utils.Constants
 import com.papb.projectakhirandroid.utils.Utils
 
-@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun AddPostScreen(
     navController: NavController,
@@ -45,27 +30,10 @@ fun AddPostScreen(
 
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) } 
     var existingImageUrl by remember { mutableStateOf<String?>(null) }
 
     val context = LocalContext.current
     val isLoading by viewModel.isLoading.collectAsState()
-
-    // 1. Launcher Galeri
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        selectedImageUri = uri
-    }
-
-    // 2. Permission State & Launcher
-    val permissionToRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        Manifest.permission.READ_MEDIA_IMAGES
-    } else {
-        Manifest.permission.READ_EXTERNAL_STORAGE
-    }
-    val permissionState = rememberPermissionState(permission = permissionToRequest)
 
     LaunchedEffect(existingPost) {
         if (existingPost != null) {
@@ -107,50 +75,7 @@ fun AddPostScreen(
                 verticalArrangement = Arrangement.spacedBy(DIMENS_16dp)
             ) {
 
-                // 1. INPUT GAMBAR (DENGAN PERMISSION CHECK)
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(DIMENS_200dp)
-                            .background(Color.LightGray.copy(alpha = 0.5f), RoundedCornerShape(DIMENS_12dp))
-                            .clickable {
-                                // Cek izin sebelum buka galeri
-                                if (permissionState.status.isGranted) {
-                                    imagePickerLauncher.launch("image/*")
-                                } else {
-                                    permissionState.launchPermissionRequest()
-                                }
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        val painter = if (selectedImageUri != null) {
-                            rememberAsyncImagePainter(selectedImageUri)
-                        } else if (existingImageUrl != null) {
-                            rememberAsyncImagePainter(existingImageUrl)
-                        } else {
-                            null
-                        }
-
-                        if (painter != null) {
-                            Image(
-                                painter = painter,
-                                contentDescription = "Gambar Postingan",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Icon(
-                                Icons.Filled.Image,
-                                contentDescription = "Pilih Gambar",
-                                modifier = Modifier.size(DIMENS_64dp),
-                                tint = Color.Gray
-                            )
-                        }
-                    }
-                }
-
-                // 2. JUDUL INPUT FIELD
+                // 1. JUDUL INPUT FIELD
                 item {
                     OutlinedTextField(
                         value = title,
@@ -177,7 +102,7 @@ fun AddPostScreen(
                     )
                 }
 
-                // 3. DESKRIPSI INPUT FIELD
+                // 2. DESKRIPSI INPUT FIELD
                 item {
                     OutlinedTextField(
                         value = description,
@@ -205,25 +130,23 @@ fun AddPostScreen(
                     )
                 }
 
-                // 4. TOMBOL KIRIM
+                // 3. TOMBOL KIRIM
                 item {
                     Button(
                         onClick = {
                             if (title.isNotBlank() && description.isNotBlank()) {
-                                if (postId == 0L) { // Logic fix: check postId instead of existingPost object reference for clarity
+                                if (postId == 0L) {
                                     viewModel.createPost(
                                         title = title,
                                         description = description,
-                                        type = postType,
-                                        imageUri = selectedImageUri
+                                        type = postType
                                     )
                                     Utils.displayToast(context, "Memposting...")
                                 } else {
                                     viewModel.updatePost(
-                                        id = postId, // Use the passed postId
+                                        id = postId, 
                                         title = title,
                                         description = description,
-                                        imageUri = selectedImageUri,
                                         existingImageUrl = existingImageUrl
                                     )
                                     Utils.displayToast(context, "Memperbarui...")

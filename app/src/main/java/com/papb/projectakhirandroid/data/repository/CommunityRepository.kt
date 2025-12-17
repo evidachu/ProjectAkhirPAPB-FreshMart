@@ -3,14 +3,11 @@
 package com.papb.projectakhirandroid.data.repository
 
 import android.content.Context
-import android.net.Uri
 import com.papb.projectakhirandroid.domain.model.Post
-import com.papb.projectakhirandroid.utils.ImageUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.postgrest
-import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
@@ -61,23 +58,17 @@ class CommunityRepository @Inject constructor(
         title: String,
         description: String,
         type: String,
-        imageUri: Uri?,
         ownerName: String
     ): Boolean {
         return withContext(Dispatchers.IO) {
             try {
                 val userId = supabaseClient.auth.currentSessionOrNull()?.user?.id
-                var imageUrl: String? = null
-
-                if (imageUri != null) {
-                    imageUrl = uploadPostImage(imageUri)
-                }
 
                 val newPost = CreatePostDto(
                     type = type,
                     title = title,
                     description = description,
-                    imageUrl = imageUrl,
+                    imageUrl = null, // No image upload
                     ownerName = ownerName,
                     ownerId = userId
                 )
@@ -96,21 +87,14 @@ class CommunityRepository @Inject constructor(
         id: Long,
         title: String,
         description: String,
-        imageUri: Uri?,
         existingImageUrl: String?
     ): Boolean {
         return withContext(Dispatchers.IO) {
             try {
-                var finalImageUrl = existingImageUrl
-
-                if (imageUri != null) {
-                    finalImageUrl = uploadPostImage(imageUri)
-                }
-
                 val updateData = UpdatePostDto(
                     title = title,
                     description = description,
-                    imageUrl = finalImageUrl
+                    imageUrl = existingImageUrl // Keep existing if any
                 )
 
                 supabaseClient.postgrest.from("posts").update(updateData) {
@@ -140,22 +124,6 @@ class CommunityRepository @Inject constructor(
                 e.printStackTrace()
                 false
             }
-        }
-    }
-
-    private suspend fun uploadPostImage(uri: Uri): String? {
-        return try {
-            // Gunakan ImageUtils untuk kompresi agar tidak crash
-            val byteArray = ImageUtils.uriToByteArray(context, uri) ?: return null
-
-            val fileName = "post_${System.currentTimeMillis()}.jpg"
-            val bucket = supabaseClient.storage.from("community")
-
-            bucket.upload(fileName, byteArray, upsert = true)
-            bucket.publicUrl(fileName)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
         }
     }
 }
