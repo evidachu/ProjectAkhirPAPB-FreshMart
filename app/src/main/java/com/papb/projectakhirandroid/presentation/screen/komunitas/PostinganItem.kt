@@ -36,8 +36,16 @@ fun PostinganItem(
     // State untuk Dropdown Menu (Menu Opsi Lainnya)
     var showMenu by remember { mutableStateOf(false) }
 
-    // Asumsi: Resource ID untuk profile picture user default
-    val profileImageResId = R.drawable.profileimage
+    // Logic Profile Picture: Prioritaskan post.ownerAvatarUrl, jika null fallback ke drawable
+    val painter = if (post.ownerAvatarUrl != null) {
+        rememberAsyncImagePainter(
+            model = post.ownerAvatarUrl,
+            placeholder = painterResource(id = R.drawable.profileimage),
+            error = painterResource(id = R.drawable.profileimage)
+        )
+    } else {
+        painterResource(id = R.drawable.profileimage)
+    }
 
     Card(
         modifier = Modifier
@@ -61,9 +69,9 @@ fun PostinganItem(
                     .padding(horizontal = DIMENS_16dp, vertical = DIMENS_12dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Gambar Profil
+                // Gambar Profil (Update: Menggunakan Coil jika ada URL)
                 Image(
-                    painter = painterResource(id = profileImageResId),
+                    painter = painter,
                     contentDescription = "Foto Profil ${post.owner}",
                     modifier = Modifier
                         .size(DIMENS_40dp)

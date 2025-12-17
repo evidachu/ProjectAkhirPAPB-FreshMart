@@ -26,7 +26,8 @@ data class CreatePostDto(
     @SerialName("description") val description: String,
     @SerialName("image_url") val imageUrl: String?,
     @SerialName("owner_name") val ownerName: String,
-    @SerialName("owner_id") val ownerId: String?
+    @SerialName("owner_id") val ownerId: String?,
+    @SerialName("owner_avatar_url") val ownerAvatarUrl: String? // Tambahan baru
 )
 
 @Serializable
@@ -82,6 +83,7 @@ class CommunityRepository @Inject constructor(
         description: String,
         type: String,
         ownerName: String,
+        ownerAvatarUrl: String?, // Tambahkan parameter ini
         imageFile: File?
     ): Boolean {
         return withContext(Dispatchers.IO) {
@@ -97,7 +99,8 @@ class CommunityRepository @Inject constructor(
                     description = description,
                     imageUrl = imageUrl,
                     ownerName = ownerName,
-                    ownerId = userId
+                    ownerId = userId,
+                    ownerAvatarUrl = ownerAvatarUrl // Sertakan URL avatar pemilik
                 )
 
                 supabaseClient.postgrest.from("posts").insert(newPost)

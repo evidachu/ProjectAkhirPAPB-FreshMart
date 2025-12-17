@@ -33,6 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.papb.projectakhirandroid.R
 import com.papb.projectakhirandroid.domain.model.ProductItem
@@ -565,32 +566,27 @@ fun ReviewItem(
     onEditClick: () -> Unit = {},
     onDeleteClick: () -> Unit = {}
 ) {
+    // Logic Profile Picture: Prioritaskan post.ownerAvatarUrl, jika null fallback ke drawable
+    val painter = if (review.userProfilePicUrl != null) {
+        rememberAsyncImagePainter(
+            model = review.userProfilePicUrl,
+            placeholder = painterResource(id = R.drawable.profileimage),
+            error = painterResource(id = R.drawable.profileimage)
+        )
+    } else {
+        painterResource(id = R.drawable.profileimage)
+    }
+
     Row(modifier = Modifier.fillMaxWidth()) {
         // User Profile Picture
-        if (review.userProfilePicUrl.isNullOrEmpty()) {
-            Image(
-                painter = painterResource(id = R.drawable.profile_picture_placeholder),
-                contentDescription = "User profile picture",
-                modifier = Modifier
-                    .size(DIMENS_40dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(review.userProfilePicUrl)
-                    .crossfade(true)
-                    .placeholder(R.drawable.profile_picture_placeholder)
-                    .error(R.drawable.profile_picture_placeholder)
-                    .build(),
-                contentDescription = "User profile picture",
-                modifier = Modifier
-                    .size(DIMENS_40dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
-        }
+        Image(
+            painter = painter,
+            contentDescription = "User profile picture",
+            modifier = Modifier
+                .size(DIMENS_40dp)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
         
         Spacer(modifier = Modifier.width(DIMENS_16dp))
         

@@ -55,14 +55,16 @@ class KomunitasViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             
-            // Ambil nama user yang sedang login dari UserRepository (DataStore)
+            // Ambil nama user & avatar yang sedang login dari UserRepository (DataStore)
             val currentUserName = userRepository.getName().first()
+            val currentUserAvatar = userRepository.getProfileImageUri().first()
 
             val success = communityRepository.createPost(
                 title = title,
                 description = description,
                 type = type,
                 ownerName = currentUserName,
+                ownerAvatarUrl = currentUserAvatar, // Kirim URL foto profil
                 imageFile = imageFile
             )
 

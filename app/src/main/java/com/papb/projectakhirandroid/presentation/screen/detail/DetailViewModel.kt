@@ -71,6 +71,8 @@ class DetailViewModel @Inject constructor(
     fun submitReview(productId: Int, rating: Int, reviewText: String, imageFile: File?) {
         viewModelScope.launch {
             _isLoading.value = true
+            
+            // Ambil data terbaru dari profil user lokal saat ini
             val username = userRepository.getName().first()
             val profilePicUrl = userRepository.getProfileImageUri().first()
 

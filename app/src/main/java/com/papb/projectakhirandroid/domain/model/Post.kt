@@ -29,6 +29,10 @@ data class Post(
     @SerialName("owner_id")
     val ownerId: String? = null, // Auth User ID
 
+    // Tambahan field untuk foto profil pemilik postingan
+    @SerialName("owner_avatar_url")
+    val ownerAvatarUrl: String? = null,
+
     @SerialName("likes")
     val likes: Int = 0,
     
